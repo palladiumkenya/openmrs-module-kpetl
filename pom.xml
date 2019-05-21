@@ -3,16 +3,16 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.openmrs.module</groupId>
-	<artifactId>kpetl</artifactId>
-	<version>1.0.1</version>
+	<artifactId>kenyaemrCharts</artifactId>
+	<version>1.0.4-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>KP ETL Management</name>
+	<name>KenyaEMR ETL Management</name>
 	<description>dhoc charts</description>
 	<url>https://wiki.openmrs.org/display/docs/KenyaEMR+Adhoc+Charts+Module+Module</url>
 	
 	<developers>
 		<developer>
-			<name>KP Developers</name>
+			<name>kenyaEMR Developers</name>
 		</developer>
 	</developers>
 	
