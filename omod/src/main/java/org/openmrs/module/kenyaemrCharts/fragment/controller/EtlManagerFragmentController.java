@@ -207,6 +207,8 @@ public class EtlManagerFragmentController {
                     }
                 } catch (Exception e) {
                     throw new IllegalArgumentException("Unable to execute", e);
+                } finally {
+                    Context.closeSession();
                 }
             }
 
@@ -266,7 +268,9 @@ public class EtlManagerFragmentController {
             }
             sampleTypeObject.put("data", ret);
         }else {
+
             return sampleTypeObject;
+
         }
 
         return sampleTypeObject;
