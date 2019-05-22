@@ -8,18 +8,18 @@ BEGIN
 SELECT "Processing client registration data ", CONCAT("Time: ", NOW());
 insert into kp_etl.etl_client_registration(
 client_id,
+registration_date,
 given_name,
 middle_name,
 family_name,
-unidentified int(11),
 Gender,
 DOB,
 dead,
 voided,
-death_date
-)
+death_date)
 select
 p.person_id,
+p.date_created,
 p.given_name,
 p.middle_name,
 p.family_name,
@@ -31,6 +31,7 @@ p.death_date
 FROM (
 select
 p.person_id,
+p.date_created,
 pn.given_name,
 pn.middle_name,
 pn.family_name,
@@ -47,21 +48,15 @@ GROUP BY p.person_id
 ) p
 ON DUPLICATE KEY UPDATE given_name = p.given_name, middle_name=p.middle_name, family_name=p.family_name;
 
-
--- update etl_patient_demographics with patient attributes: birthplace, citizenship, mother_name, phone number and kin's details
-update kenyaemr_etl.etl_patient_demographics d
+-- update etl_client_registration with patient attributes: birthplace, citizenship, mother_name, phone number and kin's details
+update kp_etl.etl_client_registration r
 left outer join
 (
 select
 pa.person_id,
-max(if(pat.uuid='8d8718c2-c2cc-11de-8d13-0010c6dffd0f', pa.value, null)) as birthplace,
-max(if(pat.uuid='8d871afc-c2cc-11de-8d13-0010c6dffd0f', pa.value, null)) as citizenship,
-max(if(pat.uuid='8d871d18-c2cc-11de-8d13-0010c6dffd0f', pa.value, null)) as Mother_name,
+max(if(pat.uuid='aec1b592-1d8a-11e9-ab14-d663bd873d93', pa.value, null)) as alias_name,
 max(if(pat.uuid='b2c38640-2603-4629-aebd-3b54f33f1e3a', pa.value, null)) as phone_number,
-max(if(pat.uuid='342a1d39-c541-4b29-8818-930916f4c2dc', pa.value, null)) as next_of_kin_contact,
-max(if(pat.uuid='d0aa9fd1-2ac5-45d8-9c5e-4317c622c8f5', pa.value, null)) as next_of_kin_relationship,
-max(if(pat.uuid='7cf22bec-d90a-46ad-9f48-035952261294', pa.value, null)) as next_of_kin_address,
-max(if(pat.uuid='830bef6d-b01f-449d-9f8d-ac0fede8dbd3', pa.value, null)) as next_of_kin_name,
+max(if(pat.uuid='94614350-84c8-41e0-ac29-86bc107069be', pa.value, null)) as alt_phone_number,
 max(if(pat.uuid='b8d0b331-1d2d-4a9a-b741-1816f498bdb6', pa.value, null)) as email_address
 from person_attribute pa
 inner join
@@ -74,61 +69,51 @@ from person_attribute_type pat
 where pat.retired=0
 ) pat on pat.person_attribute_type_id = pa.person_attribute_type_id
 and pat.uuid in (
-	'8d8718c2-c2cc-11de-8d13-0010c6dffd0f', -- birthplace
-	'8d871afc-c2cc-11de-8d13-0010c6dffd0f', -- citizenship
-	'8d871d18-c2cc-11de-8d13-0010c6dffd0f', -- mother's name
-	'b2c38640-2603-4629-aebd-3b54f33f1e3a', -- telephone contact
-	'342a1d39-c541-4b29-8818-930916f4c2dc', -- next of kin's contact
-	'd0aa9fd1-2ac5-45d8-9c5e-4317c622c8f5', -- next of kin's relationship
-	'7cf22bec-d90a-46ad-9f48-035952261294', -- next of kin's address
-	'830bef6d-b01f-449d-9f8d-ac0fede8dbd3', -- next of kin's name
+	'aec1b592-1d8a-11e9-ab14-d663bd873d93', -- alias_name
+	'b2c38640-2603-4629-aebd-3b54f33f1e3a', -- phone contact
+	'94614350-84c8-41e0-ac29-86bc107069be', -- alternative phone contact
 	'b8d0b331-1d2d-4a9a-b741-1816f498bdb6' -- email address
 
 	)
 where pa.voided=0
 group by pa.person_id
 ) att on att.person_id = d.patient_id
-set d.phone_number=att.phone_number,
-	d.next_of_kin=att.next_of_kin_name,
-	d.next_of_kin_relationship=att.next_of_kin_relationship,
-	d.next_of_kin_phone=att.next_of_kin_contact,
-	d.phone_number=att.phone_number,
-	d.birth_place = att.birthplace,
-	d.citizenship = att.citizenship,
-	d.email_address=att.email_address;
+set r.alias_name = att.alias_name,
+  r.phone_number=att.phone_number,
+	r.alt_phone_number=att.alt_phone_number,
+	r.email_address=att.email_address;
 
 
-update kenyaemr_etl.etl_patient_demographics d
+update kp_etl.etl_client_registration r
 join (select pi.patient_id,
 max(if(pit.uuid='05ee9cf4-7242-4a17-b4d4-00f707265c8a',pi.identifier,null)) as upn,
-max(if(pit.uuid='d8ee3b8c-a8fc-4d6b-af6a-9423be5f8906',pi.identifier,null)) district_reg_number,
-max(if(pit.uuid='c4e3caca-2dcc-4dc4-a8d9-513b6e63af91',pi.identifier,null)) Tb_treatment_number,
-max(if(pit.uuid='b4d66522-11fc-45c7-83e3-39a1af21ae0d',pi.identifier,null)) Patient_clinic_number,
-max(if(pit.uuid='49af6cdc-7968-4abb-bf46-de10d7f4859f',pi.identifier,null)) National_id,
-max(if(pit.uuid='0691f522-dd67-4eeb-92c8-af5083baf338',pi.identifier,null)) Hei_id
+max(if(pit.uuid='49af6cdc-7968-4abb-bf46-de10d7f4859f',pi.identifier,null)) national_id,
+max(if(pit.uuid='aec1b20e-1d8a-11e9-ab14-d663bd873d93',pi.identifier,null)) passport_number
 from patient_identifier pi
 join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
 where voided=0
 group by pi.patient_id) pid on pid.patient_id=d.patient_id
-set d.unique_patient_no=pid.UPN,
-	d.national_id_no=pid.National_id,
-	d.patient_clinic_number=pid.Patient_clinic_number,
-    d.hei_no=pid.Hei_id,
-    d.Tb_no=pid.Tb_treatment_number,
-    d.district_reg_no=pid.district_reg_number
-;
+set r.unique_patient_number=pid.upn,
+	r.national_id_number=pid.national_id,
+	r.passport_number=pid.national_id
+  ;
 
-update kenyaemr_etl.etl_patient_demographics d
-join (select o.person_id as patient_id,
-max(if(o.concept_id in(1054),cn.name,null))  as marital_status,
-max(if(o.concept_id in(1712),cn.name,null))  as education_level
-from obs o
-join concept_name cn on cn.concept_id=o.value_coded and cn.concept_name_type='FULLY_SPECIFIED'
-and cn.locale='en'
-where o.concept_id in (1054,1712) and o.voided=0
-group by person_id) pstatus on pstatus.patient_id=d.patient_id
-set d.marital_status=pstatus.marital_status,
-d.education_level=pstatus.education_level;
+update kp_etl.etl_client_registration r
+join (select pa.person_id as client_id,
+pa.address1 as postal_address,
+pa.county_district as county,
+pa.state_province as sub_county,
+pa.address4 as location,
+pa.address5 as sub_location,
+pa.city_village as village
+from person_address pa
+group by person_id) pstatus on pstatus.client_id=r.client_id
+set r.postal_address=pstatus.postal_address,
+r.county=pstatus.county;
+r.sub_county= pstatus.sub_county
+r.location= pstatus.location
+r.sub_location= pstatus.sub_location
+r.village= pstatus.village
 
 END$$
 
