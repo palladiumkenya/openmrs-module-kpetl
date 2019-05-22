@@ -3,15 +3,15 @@ CREATE PROCEDURE create_etl_tables()
 BEGIN
 DECLARE script_id INT(11);
 
--- create/recreate database kenyaemr_etl
-drop database if exists kenyaemr_etl;
-create database kenyaemr_etl;
+-- create/recreate database kp_etl
+drop database if exists kp_etl;
+create database kp_etl;
 
-drop database if exists kenyaemr_datatools;
-create database kenyaemr_datatools;
+drop database if exists kp_datatools;
+create database kp_datatools;
 
-DROP TABLE IF EXISTS kenyaemr_etl.etl_script_status;
-CREATE TABLE kenyaemr_etl.etl_script_status(
+DROP TABLE IF EXISTS kp_etl.etl_script_status;
+CREATE TABLE kp_etl.etl_script_status(
   id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   script_name VARCHAR(50) DEFAULT null,
   start_time DATETIME DEFAULT NULL,
@@ -20,78 +20,140 @@ CREATE TABLE kenyaemr_etl.etl_script_status(
 );
 
 -- Log start time
-INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('initial_creation_of_tables', NOW());
+INSERT INTO kp_etl.etl_script_status(script_name, start_time) VALUES('initial_creation_of_tables', NOW());
 SET script_id = LAST_INSERT_ID();
 
-DROP TABLE if exists kenyaemr_etl.etl_hiv_enrollment;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_hiv_followup;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_laboratory_extract;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_pharmacy_extract;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_treatment_event;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_program_discontinuation;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_mch_enrollment;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_mch_antenatal_visit;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_mch_postnatal_visit;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_tb_enrollment;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_tb_follow_up_visit;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_tb_screening;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_enrollment;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_follow_up_visit;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_mchs_delivery;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_mchs_discharge;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_immunization;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_patients_booked_today;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_missed_appointments;
-DROP TABLE if exists kenyaemr_etl.etl_patient_demographics;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_event;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_test;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral_and_linkage;
-DROP TABLE IF EXISTS kenyaemr_etl.tmp_regimen_events_ordered;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_ccc_defaulter_tracing;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_ART_preparation;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_enhanced_adherence;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_triage;
+DROP TABLE IF EXISTS kp_etl.etl_client_registration;
+DROP TABLE IF EXISTS kp_etl.etl_client_social_status;
+DROP TABLE IF EXISTS kp_etl.etl_client_enrollment;
+/*DROP TABLE if exists kp_etl.etl_hiv_enrollment;
+DROP TABLE IF EXISTS kp_etl.etl_patient_hiv_followup;
+DROP TABLE IF EXISTS kp_etl.etl_laboratory_extract;
+DROP TABLE IF EXISTS kp_etl.etl_pharmacy_extract;
+DROP TABLE IF EXISTS kp_etl.etl_patient_treatment_event;
+DROP TABLE IF EXISTS kp_etl.etl_patient_program_discontinuation;
+DROP TABLE IF EXISTS kp_etl.etl_mch_enrollment;
+DROP TABLE IF EXISTS kp_etl.etl_mch_antenatal_visit;
+DROP TABLE IF EXISTS kp_etl.etl_mch_postnatal_visit;
+DROP TABLE IF EXISTS kp_etl.etl_tb_enrollment;
+DROP TABLE IF EXISTS kp_etl.etl_tb_follow_up_visit;
+DROP TABLE IF EXISTS kp_etl.etl_tb_screening;
+DROP TABLE IF EXISTS kp_etl.etl_hei_enrollment;
+DROP TABLE IF EXISTS kp_etl.etl_hei_follow_up_visit;
+DROP TABLE IF EXISTS kp_etl.etl_mchs_delivery;
+DROP TABLE IF EXISTS kp_etl.etl_mchs_discharge;
+DROP TABLE IF EXISTS kp_etl.etl_hei_immunization;
+DROP TABLE IF EXISTS kp_etl.etl_patients_booked_today;
+DROP TABLE IF EXISTS kp_etl.etl_missed_appointments;
+DROP TABLE if exists kp_etl.etl_patient_demographics;
+DROP TABLE IF EXISTS kp_etl.etl_drug_event;
+DROP TABLE IF EXISTS kp_etl.etl_hts_test;
+DROP TABLE IF EXISTS kp_etl.etl_hts_referral_and_linkage;
+DROP TABLE IF EXISTS kp_etl.tmp_regimen_events_ordered;
+DROP TABLE IF EXISTS kp_etl.etl_ccc_defaulter_tracing;
+DROP TABLE IF EXISTS kp_etl.etl_ART_preparation;
+DROP TABLE IF EXISTS kp_etl.etl_enhanced_adherence;
+DROP TABLE IF EXISTS kp_etl.etl_patient_triage;
+*/
 
-
-
--- create table etl_patient_demographics
-create table kenyaemr_etl.etl_patient_demographics (
-patient_id INT(11) not null primary key,
+-- create table etl_client_registration
+create table kp_etl.etl_client_registration (
+client_id INT(11) not null primary key,
+registration_date DATE,
 given_name VARCHAR(255),
 middle_name VARCHAR(255),
 family_name VARCHAR(255),
+unidentified int(11),
 Gender VARCHAR(10),
 DOB DATE,
+alias_name VARCHAR(255),
+postal_address VARCHAR (255),
+county VARCHAR (255),
+sub_county VARCHAR (255),
+location VARCHAR (255),
+sub_location VARCHAR (255),
+village VARCHAR (255),
+phone_no VARCHAR (255)  DEFAULT NULL,
+alt_phone_no VARCHAR (255)  DEFAULT NULL,
+email_address VARCHAR (255)  DEFAULT NULL,
 national_id_no VARCHAR(50),
-unique_patient_no VARCHAR(50),
-patient_clinic_number VARCHAR(15) DEFAULT NULL,
-Tb_no VARCHAR(50),
-district_reg_no VARCHAR(50),
-hei_no VARCHAR(50),
-phone_number VARCHAR(50) DEFAULT NULL,
-birth_place VARCHAR(50) DEFAULT NULL,
-citizenship VARCHAR(50) DEFAULT NULL,
-email_address VARCHAR(100) DEFAULT NULL,
-next_of_kin VARCHAR(255) DEFAULT NULL,
-next_of_kin_phone VARCHAR(100) DEFAULT NULL,
-next_of_kin_relationship VARCHAR(100) DEFAULT NULL,
-marital_status VARCHAR(50) DEFAULT NULL,
-education_level VARCHAR(50) DEFAULT NULL,
+passport_no VARCHAR(50)  DEFAULT NULL,
 dead INT(11),
 death_date DATE DEFAULT NULL,
 voided INT(11),
-index(patient_id),
+constraint foreign key(client_id) references provider(provider_id),
+index(client_id),
 index(Gender),
-index(unique_patient_no),
 index(DOB)
 
 );
 
-SELECT "Successfully created etl_patient_demographics table";
--- create table etl_hiv_enrollment
+SELECT "Successfully created etl_client_registration table";
+
+-- create table etl_client_social_status
+create table kp_etl.etl_client_social_status (
+uuid char(38) ,
+key_population_type VARCHAR(255),
+peer_educator int(11),
+client_id INT(11),
+hot_spot VARCHAR(255),
+weekly_sex_acts int (11),
+weekly_anal_sex_acts int (11),
+daily_drug_injections int (11),
+avg_weekly_drug_injections int (11),
+voided INT(11),
+constraint foreign key(peer_educator) references kp_etl.etl_client_registration(client_id),
+CONSTRAINT unique_uuid UNIQUE(uuid),
+index(client_id),
+index(key_population_type)
+);
+
+SELECT "Successfully created etl_client_social_status table";
+
+-- create table etl_client_enrollment
+
+create table kp_etl.etl_client_enrollment (
+uuid char(38) ,
+client_id INT(11) not null primary key,
+unique_client_no VARCHAR(50),
+enrollment_date DATETIME,
+enrollment_service_area VARCHAR(255),
+contacted_for_prevention int(11),
+contact_person_name VARCHAR(255),
+regular_free_sexual_partner int(11),
+free_sexual_partner_name VARCHAR(255),
+free_sexual_partner_alias VARCHAR(255),
+free_sexual_partner_contact VARCHAR(255),
+contact_regular_sexual_partner int(11),
+sex_work_startdate DATE,
+sex_with_men_startdate DATE,
+drug_startdate DATE,
+sexual_violence_experienced int(11),
+sexual_violence_ordeal VARCHAR(255),
+physical_violence_experienced int(11),
+physical_violence_ordeal VARCHAR(255),
+contact_clinical_appointment VARCHAR(10),
+contact_method VARCHAR(10),
+treatment_supporter_name VARCHAR(255),
+treatment_supporter_alias VARCHAR(255),
+treatment_supporter_contact VARCHAR(255),
+treatment_supporter_alt_contact VARCHAR(255),
+enrollment_notes VARCHAR(255),
+voided INT(11),
+constraint foreign key(client_id) references kp_etl.etl_client_registration(client_id),
+CONSTRAINT unique_uuid UNIQUE(uuid),
+index(client_id),
+index(Gender),
+index(unique_client_no),
+index(enrollment_date),
+index(enrollment_service_area)
 
 
-create table kenyaemr_etl.etl_hiv_enrollment(
+);
+SELECT "Successfully created etl_client_enrollment table";
+
+
+create table kp_etl.etl_hiv_enrollment(
 uuid char(38) ,
 patient_id INT(11) NOT NULL,
 visit_id INT(11) DEFAULT NULL,
@@ -117,7 +179,7 @@ date_of_discontinuation DATETIME,
 discontinuation_reason INT(11),
 date_created DATE,
 voided INT(11),
-constraint foreign key(patient_id) references kenyaemr_etl.etl_patient_demographics(patient_id),
+constraint foreign key(patient_id) references kp_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 index(patient_id),
 index(visit_id),
@@ -135,7 +197,7 @@ index(entry_point, transfer_in_date, visit_date, patient_id)
 SELECT "Successfully created etl_hiv_enrollment table";
 -- create table etl_hiv_followup
 
-CREATE TABLE kenyaemr_etl.etl_patient_hiv_followup (
+CREATE TABLE kp_etl.etl_patient_hiv_followup (
 uuid CHAR(38),
 encounter_id INT(11) NOT NULL PRIMARY KEY,
 patient_id INT(11) NOT NULL ,
@@ -219,7 +281,7 @@ next_appointment_reason INT(11),
 stability INT(11),
 differentiated_care INT(11),
 voided INT(11),
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
 INDEX(encounter_id),
@@ -251,7 +313,7 @@ SELECT "Successfully created etl_patient_hiv_followup table";
 
 -- ------- create table etl_laboratory_extract-----------------------------------------
   SELECT "Creating etl_laboratory_extract table";
-CREATE TABLE kenyaemr_etl.etl_laboratory_extract (
+CREATE TABLE kp_etl.etl_laboratory_extract (
 uuid char(38) PRIMARY KEY,
 encounter_id INT(11),
 patient_id INT(11) NOT NULL ,
@@ -266,7 +328,7 @@ date_test_result_received DATE,
 test_requested_by INT(11),
 date_created DATE,
 created_by INT(11),
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
 INDEX(visit_date),
 INDEX(encounter_id),
 INDEX(patient_id),
@@ -279,7 +341,7 @@ SELECT "Successfully created etl_laboratory_extract table";
 -- ------------ create table etl_pharmacy_extract-----------------------
 
 
-CREATE TABLE kenyaemr_etl.etl_pharmacy_extract(
+CREATE TABLE kp_etl.etl_pharmacy_extract(
 obs_group_id INT(11) PRIMARY KEY,
 uuid char(38),
 patient_id INT(11) NOT NULL ,
@@ -307,7 +369,7 @@ date_of_refill DATE,
 date_created DATE,
 voided INT(11),
 date_voided DATE,
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
 INDEX(encounter_id),
@@ -319,7 +381,7 @@ INDEX(is_arv)
 SELECT "Successfully created etl_pharmacy_extract table";
 -- ------------ create table etl_patient_treatment_discontinuation-----------------------
 
-CREATE TABLE kenyaemr_etl.etl_patient_program_discontinuation(
+CREATE TABLE kp_etl.etl_patient_program_discontinuation(
 uuid char(38),
 patient_id INT(11) NOT NULL ,
 visit_id INT(11),
@@ -332,7 +394,7 @@ discontinuation_reason INT(11),
 date_died DATE,
 transfer_facility VARCHAR(100),
 transfer_date DATE,
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
 INDEX(visit_date, program_name, patient_id),
@@ -346,7 +408,7 @@ INDEX(transfer_date)
 SELECT "Successfully created etl_patient_program_discontinuation table";
 
 -- ------------ create table etl_mch_enrollment-----------------------
-  CREATE TABLE kenyaemr_etl.etl_mch_enrollment (
+  CREATE TABLE kp_etl.etl_mch_enrollment (
     uuid char(38),
     patient_id INT(11) NOT NULL ,
     visit_id INT(11),
@@ -385,7 +447,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     urine_dipstick_for_blood INT(11),
     date_of_discontinuation DATETIME,
     discontinuation_reason INT(11),
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
@@ -396,9 +458,9 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
   );
   SELECT "Successfully created etl_mch_enrollment table";
 
-  -- ------------ create table etl_mch_antenatal_visit-----------------------
+  -- ------------ create table etl_enrollment-----------------------
 
-  CREATE TABLE kenyaemr_etl.etl_mch_antenatal_visit (
+  CREATE TABLE kp_etl.etl_mch_antenatal_visit (
     uuid char(38),
     patient_id INT(11) NOT NULL ,
     visit_id INT(11),
@@ -476,7 +538,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     referred_to INT(11),
     next_appointment_date DATE,
     clinical_notes VARCHAR(200) DEFAULT NULL,
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
@@ -493,7 +555,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
 
   -- ------------ create table etl_mchs_delivery-----------------------
 
-  CREATE TABLE kenyaemr_etl.etl_mchs_delivery (
+  CREATE TABLE kp_etl.etl_mchs_delivery (
     uuid char(38),
     provider INT(11),
     patient_id INT(11) NOT NULL ,
@@ -548,7 +610,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     baby_nvp_dispensed INT(11),
     clinical_notes VARCHAR(200) DEFAULT NULL,
 
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
@@ -562,7 +624,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
 
   -- ------------ create table etl_mchs_discharge-----------------------
 
-  CREATE TABLE kenyaemr_etl.etl_mchs_discharge (
+  CREATE TABLE kp_etl.etl_mchs_discharge (
     uuid char(38),
     provider INT(11),
     patient_id INT(11) NOT NULL ,
@@ -580,7 +642,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     referred_from INT(11),
     referred_to INT(11),
     clinical_notes VARCHAR(200) DEFAULT NULL,
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
@@ -591,7 +653,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
 
   -- ------------ create table etl_mch_postnatal_visit-----------------------
 
-  CREATE TABLE kenyaemr_etl.etl_mch_postnatal_visit (
+  CREATE TABLE kp_etl.etl_mch_postnatal_visit (
     uuid char(38),
     patient_id INT(11) NOT NULL ,
     visit_id INT(11),
@@ -662,7 +724,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     referred_from INT(11),
     referred_to INT(11),
     clinical_notes VARCHAR(200) DEFAULT NULL,
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
@@ -675,7 +737,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
   SELECT "Successfully created etl_mch_postnatal_visit table";
   -- ------------ create table etl_hei_enrollment-----------------------
 
-  CREATE TABLE kenyaemr_etl.etl_hei_enrollment (
+  CREATE TABLE kp_etl.etl_hei_enrollment (
     serial_no INT(11)NOT NULL AUTO_INCREMENT,
     uuid char(38),
     patient_id INT(11) NOT NULL ,
@@ -725,7 +787,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     exit_date DATE,
     exit_reason INT(11),
     hiv_status_at_exit VARCHAR(50),
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
@@ -742,7 +804,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
 
   -- ------------ create table etl_hei_follow_up_visit-----------------------
 
-  CREATE TABLE kenyaemr_etl.etl_hei_follow_up_visit (
+  CREATE TABLE kp_etl.etl_hei_follow_up_visit (
     uuid char(38),
     provider INT(11),
     patient_id INT(11) NOT NULL ,
@@ -789,7 +851,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     unit VARCHAR(100),
     next_appointment_date DATE,
     comments VARCHAR(100),
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
@@ -799,7 +861,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
 
   -- ------- create table etl_hei_immunization table-----------------------------------------
   SELECT "Creating etl_hei_immunization table";
-  CREATE TABLE kenyaemr_etl.etl_hei_immunization (
+  CREATE TABLE kp_etl.etl_hei_immunization (
     encounter_id INT(11) NOT NULL PRIMARY KEY,
     patient_id INT(11) NOT NULL ,
     visit_date DATE,
@@ -829,7 +891,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     VitaminA_2_yr VARCHAR(50),
     VitaminA_2_to_5_yr VARCHAR(50),
     fully_immunized DATE,
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
     INDEX(visit_date),
     INDEX(encounter_id)
 
@@ -839,7 +901,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
 
 -- ------------ create table etl_tb_enrollment-----------------------
 
-CREATE TABLE kenyaemr_etl.etl_tb_enrollment (
+CREATE TABLE kp_etl.etl_tb_enrollment (
 uuid char(38),
 patient_id INT(11) NOT NULL ,
 visit_id INT(11),
@@ -876,7 +938,7 @@ treatment_outcome INT(11),
 treatment_outcome_date DATE,
 date_of_discontinuation DATETIME,
 discontinuation_reason INT(11),
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
 INDEX(encounter_id),
@@ -889,7 +951,7 @@ INDEX(date_first_enrolled_in_tb_care)
 
 -- ------------ create table etl_tb_follow_up_visit-----------------------
 
-CREATE TABLE kenyaemr_etl.etl_tb_follow_up_visit (
+CREATE TABLE kp_etl.etl_tb_follow_up_visit (
 uuid char(38),
 provider INT(11),
 patient_id INT(11) NOT NULL ,
@@ -915,7 +977,7 @@ sensitive_e INT(11),
 test_date DATE,
 hiv_status INT(11),
 next_appointment_date DATE,
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
 INDEX(encounter_id),
@@ -925,7 +987,7 @@ INDEX(hiv_status)
 
 -- ------------ create table etl_tb_screening-----------------------
 
-CREATE TABLE kenyaemr_etl.etl_tb_screening (
+CREATE TABLE kp_etl.etl_tb_screening (
 uuid char(38),
 provider INT(11),
 patient_id INT(11) NOT NULL ,
@@ -941,7 +1003,7 @@ night_sweat_for_2wks_or_more INT(11),
 resulting_tb_status INT(11),
 tb_treatment_start_date DATE DEFAULT NULL,
 notes VARCHAR(100),
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
 INDEX(encounter_id),
@@ -955,17 +1017,17 @@ INDEX(resulting_tb_status)
 
 -- ------------ create table etl_patients_booked_today-----------------------
 
-CREATE TABLE kenyaemr_etl.etl_patients_booked_today(
+CREATE TABLE kp_etl.etl_patients_booked_today(
 id INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
 patient_id INT(11) NOT NULL ,
 last_visit_date DATE,
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
 INDEX(patient_id)
 );
 
 -- ------------ create table etl_missed_appointments-----------------------
 
-CREATE TABLE kenyaemr_etl.etl_missed_appointments(
+CREATE TABLE kp_etl.etl_missed_appointments(
 id INT(11) NOT NULL PRIMARY KEY,
 patient_id INT(11) NOT NULL ,
 last_tca_date DATE,
@@ -973,13 +1035,13 @@ last_visit_date DATE,
 last_encounter_type VARCHAR(100),
 days_since_last_visit INT(11),
 date_table_created DATE,
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
 INDEX(patient_id)
 );
 
 -- --------------------------- CREATE drug_event table ---------------------
 
-  CREATE TABLE kenyaemr_etl.etl_drug_event(
+  CREATE TABLE kp_etl.etl_drug_event(
     uuid CHAR(38) PRIMARY KEY,
     patient_id INT(11) NOT NULL,
     date_started DATE,
@@ -996,7 +1058,7 @@ INDEX(patient_id)
     reason_discontinued INT(11),
     reason_discontinued_other VARCHAR(100),
     voided INT(11),
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
     INDEX(patient_id),
     INDEX(date_started),
     INDEX(date_discontinued),
@@ -1005,7 +1067,7 @@ INDEX(patient_id)
 
 -- -------------------------- CREATE hts_test table ---------------------------------
 
-create table kenyaemr_etl.etl_hts_test (
+create table kp_etl.etl_hts_test (
 patient_id INT(11) not null,
 visit_id INT(11) DEFAULT NULL,
 encounter_id INT(11) NOT NULL primary key,
@@ -1054,7 +1116,7 @@ index(test_2_kit_name)
 
 -- ------------- CREATE HTS LINKAGE AND REFERRALS ------------------------
 
-CREATE TABLE kenyaemr_etl.etl_hts_referral_and_linkage (
+CREATE TABLE kp_etl.etl_hts_referral_and_linkage (
 patient_id INT(11) not null,
 visit_id INT(11) DEFAULT NULL,
 encounter_id INT(11) NOT NULL primary key,
@@ -1079,7 +1141,7 @@ index(tracing_status)
 
 -- ------------ create table etl_ipt_screening-----------------------
 
-CREATE TABLE kenyaemr_etl.etl_ipt_screening (
+CREATE TABLE kp_etl.etl_ipt_screening (
 uuid char(38),
 provider INT(11),
 patient_id INT(11) NOT NULL ,
@@ -1092,7 +1154,7 @@ numbness INT(11),
 yellow_eyes INT(11),
 abdominal_tenderness INT(11),
 ipt_started INT(11),
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
 INDEX(patient_id),
@@ -1104,7 +1166,7 @@ INDEX(ipt_started)
 
 -- ------------ create table etl_ipt_follow_up -----------------------
 
-CREATE TABLE kenyaemr_etl.etl_ipt_follow_up (
+CREATE TABLE kp_etl.etl_ipt_follow_up (
 uuid char(38),
 provider INT(11),
 patient_id INT(11) NOT NULL ,
@@ -1122,7 +1184,7 @@ outcome VARCHAR(100),
 date_of_outcome DATE DEFAULT NULL,
 discontinuation_reason VARCHAR(100),
 action_taken VARCHAR(100),
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
 INDEX(visit_date, discontinuation_reason),
@@ -1138,7 +1200,7 @@ INDEX(outcome),
 INDEX(discontinuation_reason)
 );
 
-CREATE TABLE kenyaemr_etl.etl_ccc_defaulter_tracing (
+CREATE TABLE kp_etl.etl_ccc_defaulter_tracing (
 uuid char(38),
 provider INT(11),
 patient_id INT(11) NOT NULL ,
@@ -1153,7 +1215,7 @@ is_final_trace INT(11) ,
 true_status INT(11),
 cause_of_death INT(11),
 comments VARCHAR(100),
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
 INDEX(encounter_id),
@@ -1164,7 +1226,7 @@ INDEX(tracing_type)
 );
 
 -- ------------ create table etl_ART_preparation-----------------------
-CREATE TABLE kenyaemr_etl.etl_ART_preparation (
+CREATE TABLE kp_etl.etl_ART_preparation (
   uuid char(38),
   patient_id INT(11) NOT NULL ,
   visit_id INT(11),
@@ -1187,7 +1249,7 @@ CREATE TABLE kenyaemr_etl.etl_ART_preparation (
   support_grp_meeting_awareness varchar(10),
   enrolled_in_reminder_system varchar(10),
   other_support_systems varchar(10),
-  CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+  CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
   CONSTRAINT unique_uuid UNIQUE(uuid),
   INDEX(visit_date),
   INDEX(encounter_id),
@@ -1196,7 +1258,7 @@ CREATE TABLE kenyaemr_etl.etl_ART_preparation (
 SELECT "Successfully created etl_ART_preparation table";
 
   -- ------------ create table etl_enhanced_adherence-----------------------
-  CREATE TABLE kenyaemr_etl.etl_enhanced_adherence (
+  CREATE TABLE kp_etl.etl_enhanced_adherence (
     uuid char(38),
     patient_id INT(11) NOT NULL ,
     visit_id INT(11),
@@ -1238,7 +1300,7 @@ SELECT "Successfully created etl_ART_preparation table";
     home_visit_benefit varchar(10),
     adherence_plan varchar(255),
     next_appointment_date DATE,
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id)
@@ -1246,7 +1308,7 @@ SELECT "Successfully created etl_ART_preparation table";
   SELECT "Successfully created etl_enhanced_adherence table";
 
   -- ------------ create table etl_patient_triage-----------------------
-  CREATE TABLE kenyaemr_etl.etl_patient_triage (
+  CREATE TABLE kp_etl.etl_patient_triage (
     uuid CHAR(38),
     encounter_id INT(11) NOT NULL PRIMARY KEY,
     patient_id INT(11) NOT NULL ,
@@ -1268,7 +1330,7 @@ SELECT "Successfully created etl_ART_preparation table";
     nutritional_status INT(11) DEFAULT NULL,
     last_menstrual_period DATE,
     voided INT(11),
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kp_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
@@ -1278,7 +1340,7 @@ SELECT "Successfully created etl_ART_preparation table";
 
   SELECT "Successfully created etl_patient_triage table";
 
-  UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
+  UPDATE kp_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
 

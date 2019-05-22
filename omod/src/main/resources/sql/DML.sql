@@ -1,16 +1,17 @@
 
 SET @OLD_SQL_MODE=@@SQL_MODE$$
 SET SQL_MODE=''$$
-DROP PROCEDURE IF EXISTS sp_populate_etl_patient_demographics$$
-CREATE PROCEDURE sp_populate_etl_patient_demographics()
+DROP PROCEDURE IF EXISTS sp_populate_etl_client_registration$
+CREATE PROCEDURE sp_populate_etl_client_registration$()
 BEGIN
 -- initial set up of etl_patient_demographics table
-SELECT "Processing patient demographics data ", CONCAT("Time: ", NOW());
-insert into kenyaemr_etl.etl_patient_demographics(
-patient_id,
+SELECT "Processing client registration data ", CONCAT("Time: ", NOW());
+insert into kp_etl.etl_client_registration(
+client_id,
 given_name,
 middle_name,
 family_name,
+unidentified int(11),
 Gender,
 DOB,
 dead,
