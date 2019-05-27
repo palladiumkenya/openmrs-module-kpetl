@@ -195,7 +195,7 @@ SELECT "Successfully created etl_client_enrollment table";
     visit_id INT(11),
     encounter_provider INT(11),
     date_created DATE,
-    complaint_exists int(11),
+    complaint_exists VARCHAR(10),
     complaint_type VARCHAR(255),
     nature_of_complaint VARCHAR(255),
     onset_date DATE,
@@ -222,7 +222,7 @@ SELECT "Successfully created etl_client_enrollment table";
     visit_id INT(11),
     encounter_provider INT(11),
     date_created DATE,
-    illness_exists int(11),
+    illness_exists VARCHAR(10),
     illness_type VARCHAR(255),
     nature_of_illness VARCHAR(255),
     onset_date DATE,
@@ -238,7 +238,7 @@ SELECT "Successfully created etl_client_enrollment table";
   );
 
   SELECT "Successfully created etl_chronic_illness table";
-
+drop table etl_allergies;
     -- ------------ create table etl_allergies-----------------------
   CREATE TABLE kp_etl.etl_allergies (
     uuid CHAR(38),
@@ -249,12 +249,11 @@ SELECT "Successfully created etl_client_enrollment table";
     visit_id INT(11),
     encounter_provider INT(11),
     date_created DATE,
-    allergy_exists int(11),
+    allergy_exists VARCHAR(10),
     causative_agent VARCHAR(255),
     reaction VARCHAR(255),
     severity VARCHAR(255),
     onset_date DATE,
-    duration int(11),
     voided INT(11),
     CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
@@ -269,25 +268,25 @@ SELECT "Successfully created etl_client_enrollment table";
 
 -- create table etl_pregnancy_fp_cacx_screening
 CREATE TABLE kp_etl.etl_pregnancy_fp_cacx_screening (
-uuid char(38),
-provider INT(11),
-client_id INT(11) NOT NULL,
-visit_id INT(11),
-visit_date DATE,
-location_id INT(11) DEFAULT NULL,
+uuid CHAR(38),
 encounter_id INT(11) NOT NULL PRIMARY KEY,
+client_id INT(11) NOT NULL ,
+location_id INT(11) DEFAULT NULL,
+visit_date DATE,
+visit_id INT(11),
+encounter_provider INT(11),
 date_created DATE,
 lmp DATE,
-pregnant INT(11),
+pregnant VARCHAR(10),
 edd DATE,
 fp_status VARCHAR(255),
-elible_for_fp INT(11),
+elible_for_fp VARCHAR(10),
 fp_method VARCHAR(255),
-referred_for_fp INT(11),
-cacx_screening INT(11),
-cacx_screening_results INT(11),
-treated INT(11),
-referred INT(11),
+referred_for_fp VARCHAR(10),
+cacx_screening VARCHAR(10),
+cacx_screening_results VARCHAR(10),
+treated VARCHAR(10),
+referred VARCHAR(10),
 voided INT(11),
 CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
@@ -304,6 +303,7 @@ INDEX(referred_for_fp)
 );
 SELECT "Successfully created etl_pregnancy_fp_cacx_screening table";
 
+
    -- ------------ create table etl_adverse_drug_reaction-----------------------
   CREATE TABLE kp_etl.etl_adverse_drug_reaction (
     uuid CHAR(38),
@@ -314,7 +314,7 @@ SELECT "Successfully created etl_pregnancy_fp_cacx_screening table";
     visit_id INT(11),
     encounter_provider INT(11),
     date_created DATE,
-    adverse_drug_reaction_exists int(11),
+    adverse_drug_reaction_exists VARCHAR(10),
     causative_drug VARCHAR(255),
     reaction VARCHAR(255),
     severity VARCHAR(255),
@@ -343,10 +343,10 @@ SELECT "Successfully created etl_pregnancy_fp_cacx_screening table";
     visit_id INT(11),
     encounter_provider INT(11),
     date_created DATE,
-    immunization_done int(11),
+    immunization_done VARCHAR(10),
     immunization_type VARCHAR(255),
     immunization_date DATE,
-    immunization_side_effects int(11),
+    immunization_side_effects VARCHAR(10),
     nature_of_side_effects VARCHAR(255),
     vaccine_validity int(11),
     voided INT(11),

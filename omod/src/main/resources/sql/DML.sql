@@ -261,6 +261,654 @@ join (select pi.patient_id,
 set
     e.unique_client_no=pid.unique_client_no;
 
+
+
+-- ------------- populate etl_client_triage--------------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_client_triage$$
+CREATE PROCEDURE sp_populate_etl_client_triage()
+	BEGIN
+		SELECT "Processing Triage ", CONCAT("Time: ", NOW());
+INSERT INTO kp_etl.etl_triage(
+    uuid,
+    client_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    encounter_provider,
+    date_created,
+    weight,
+    height,
+    systolic_pressure,
+    diastolic_pressure,
+    temperature,
+    pulse_rate,
+    respiratory_rate,
+    oxygen_saturation,
+    voided
+    )
+select
+       e.uuid,
+       e.patient_id,
+       e.visit_id,
+       (e.encounter_datetime) as visit_date,
+       e.location_id,
+       e.encounter_id as encounter_id,
+       e.creator,
+       e.date_created as date_created,
+       max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
+       max(if(o.concept_id=5090,o.value_numeric,null)) as height,
+       max(if(o.concept_id=5085,o.value_numeric,null)) as systolic_pressure,
+       max(if(o.concept_id=5086,o.value_numeric,null)) as diastolic_pressure,
+       max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
+       max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
+       max(if(o.concept_id=5242,o.value_numeric,null)) as respiratory_rate,
+       max(if(o.concept_id=5092,o.value_numeric,null)) as oxygen_saturation,
+       e.voided as voided
+from encounter e
+       inner join
+         (
+         select encounter_type_id, uuid, name from encounter_type where uuid in('55e67467-bd0b-4940-82c2-3281938afde3')
+         ) et on et.encounter_type_id=e.encounter_type
+       left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                  and o.concept_id in (5089,5090,5085,5086,5088,5087,5242,5092)
+where e.voided=0
+group by e.patient_id, e.encounter_id, visit_date;
+SELECT "Completed processing Triage data ", CONCAT("Time: ", NOW());
+		END$$
+
+
+-- ------------- populate etl_client_complaints--------------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_client_complaints$$
+CREATE PROCEDURE sp_populate_etl_client_triage()
+  BEGIN
+    SELECT "Processing Complaints ", CONCAT("Time: ", NOW());
+    INSERT INTO kp_etl.etl_client_complaints(
+        uuid,
+        client_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        encounter_provider,
+        date_created,
+        complaint_exists,
+        complaint_type,
+        nature_of_complaint,
+        onset_date,
+        duration,
+        remarks,
+        voided
+        )
+    select
+           e.uuid,
+           e.patient_id,
+           e.visit_id,
+           (e.encounter_datetime) as visit_date,
+           e.location_id,
+           e.encounter_id as encounter_id,
+           e.creator,
+           e.date_created as date_created,
+           max(if(o.concept_id=5219,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as complaint_exists,
+           max(if(o.concept_id=124957,(case o.value_coded when 151 then "Abdominal pain"
+                                                        when 141631 then "Abnormal Uterine Bleeding"
+                                                        when 121543 then "Anxiety"
+                                                        when 119537 then "Depression"
+                                                        when 148035 then "Back pain"
+                                                        when 840 then "Bloody Urine"
+                                                        when 131021 then "Breast Pain"
+                                                        when 120749 then "Chest Pain"
+                                                        when 871 then "Cold and Chills"
+                                                        when 120345 then "Confusion"
+                                                        when 119574 then "Delirium"
+                                                        when 113054 then "Convulsions"
+                                                        when 206 then "Seizure"
+                                                        when 143264 then "Cough"
+                                                        when 143129 then "Crying Infant"
+                                                        when 142412 then "Diarrhea"
+                                                        when 122496 then "Difficult in breathing"
+                                                        when 118789 then "Difficulty in swallowing"
+                                                        when 141830 then "Dizziness"
+                                                        when 141585 then "Ear Pain"
+                                                        when 141128 then "Epigastric Pain"
+                                                        when 131040 then "Eye pain"
+                                                        when 114399 then "Facial Pain"
+                                                        when 162626 then "Fatigue/weakness"
+                                                        when 140238 then "Fever"
+                                                        when 140070 then "Flank Pain"
+                                                        when 123396 then "Vaginal Discharge"
+                                                        when 142247 then "Discharge from Penis"
+                                                        when 135462 then "Genital Ulcer"
+                                                        when 139084 then "Headache"
+                                                        when 117698 then "Hearing Loss"
+                                                        when 116214 then "Hypotension"
+                                                        when 112989 then "Shock"
+                                                        when 879 then "Itchiness/Pruritus"
+                                                        when 116558 then "Joint Pain"
+                                                        when 114395 then "Leg Pain"
+                                                        when 135595 then "Loss of Appetite"
+                                                        when 135488 then "Lymphadenopathy"
+                                                        when 121657 then "Memory Loss"
+                                                        when 144576 then "Coma"
+                                                        when 116334 then "Lethargy"
+                                                        when 131015 then "Mouth Pain"
+                                                        when 111721 then "Mouth Ulceration"
+                                                        when 133028 then "Muscle cramps"
+                                                        when 133632 then "Muscle Pain"
+                                                        when 5978 then "Nausea"
+                                                        when 133469 then "Neck Pain"
+                                                        when 133027 then "Night sweats"
+                                                        when 132653 then "Numbness"
+                                                        when 125225 then "Pain when Swallowing"
+                                                        when 131034 then "Pelvic Pain"
+                                                        when 5953  then "Poor Vision"
+                                                        when 512 then "Rash"
+                                                        when 127777 then "Red Eye"
+                                                        when 113224 then "Running/Blocked nose"
+                                                        when 131032 then "Scrotal Pain"
+                                                        when 126535 then "Shoulder Pain"
+                                                        when 141597 then "Sleep Disturbance"
+                                                        when 158843 then "Sore Throat"
+                                                        when 140941 then "Excessive Sweating"
+                                                        when 125198 then "Swollen Legs"
+                                                        when 112200 then "Tremors"
+                                                        when 160208 then "Urinary Symptoms"
+                                                        when 111525 then "Vertigo"
+                                                        when 122983 then "Vomiting"
+                                                        when 832 then "Weight Loss"
+                                                        when 5622 then "Other" else "" end),null)) as complaint_type,
+           max(if(o.concept_id=163042,o.value_text,null)) as nature_of_complaint,
+           max(if(o.concept_id=159948,o.value_datetime,null)) as onset_date,
+           max(if(o.concept_id=159368,o.value_numeric,null)) as duration,
+           max(if(o.concept_id=160632,o.value_text,null)) as remarks,
+
+           e.voided as voided
+    from encounter e
+           inner join
+             (
+             select encounter_type_id, uuid, name from encounter_type where uuid in('2c3cf276-3676-11e9-b210-d663bd873d93')
+             ) et on et.encounter_type_id=e.encounter_type
+           left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                      and o.concept_id in (5219,124957,163042,159948,159368,160632)
+    where e.voided=0
+    group by e.patient_id, e.encounter_id, visit_date;
+    SELECT "Completed processing complaints data ", CONCAT("Time: ", NOW());
+    END$$
+
+
+    -- ------------- populate etl_chronic_illness--------------------------------
+
+    DROP PROCEDURE IF EXISTS sp_populate_etl_chronic_illness$$
+    CREATE PROCEDURE sp_populate_etl_chronic_illness()
+      BEGIN
+        SELECT "Processing chronic illness ", CONCAT("Time: ", NOW());
+        INSERT INTO kp_etl.etl_chronic_illness(
+            uuid,
+            client_id,
+            visit_id,
+            visit_date,
+            location_id,
+            encounter_id,
+            encounter_provider,
+            date_created,
+            illness_exists,
+            illness_type,
+            nature_of_illness,
+            onset_date,
+            duration,
+            remarks,
+            voided
+            )
+        select
+               e.uuid,
+               e.patient_id,
+               e.visit_id,
+               (e.encounter_datetime) as visit_date,
+               e.location_id,
+               e.encounter_id as encounter_id,
+               e.creator,
+               e.date_created as date_created,
+               max(if(o.concept_id=162747,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as illness_exists,
+               max(if(o.concept_id=1284,(case o.value_coded when 149019 then "Alzheimer's Disease and other Dementias"
+                                                            when 148432 then "Arthritis"
+                                                            when 153754 then "Asthma"
+                                                            when 159351 then "Cancer"
+                                                            when 119270 then "Cardiovascular diseases"
+                                                            when 120637 then "Chronic Hepatitis"
+                                                            when 145438 then "Chronic Kidney Disease"
+                                                            when 1295 then "Chronic Obstructive Pulmonary Disease(COPD)"
+                                                            when 120576 then "Chronic Renal Failure"
+                                                            when 119692 then "Cystic Fibrosis"
+                                                            when 120291 then "Deafness and Hearing impairment"
+                                                            when 119481 then "Diabetes"
+                                                            when 118631 then "Endometriosis"
+                                                            when 117855 then "Epilepsy"
+                                                            when 117789 then "Glaucoma"
+                                                            when 139071 then "Heart Disease"
+                                                            when 115728 then "Hyperlipidaemia"
+                                                            when 117399 then "Hypertension"
+                                                            when 117321 then "Hypothyroidism"
+                                                            when 151342 then "Mental illness"
+                                                            when 133687 then "Multiple Sclerosis"
+                                                            when 115115 then "Obesity"
+                                                            when 114662 then "Osteoporosis"
+                                                            when 117703 then "Sickle Cell Anaemia"
+                                                            when 118976 then "Thyroid disease"
+
+                                                            else "" end),null)) as illness_type,
+               max(if(o.concept_id=163042,o.value_text,null)) as nature_of_illness,
+               max(if(o.concept_id=159948,o.value_datetime,null)) as onset_date,
+               max(if(o.concept_id=159368,o.value_numeric,null)) as duration,
+               max(if(o.concept_id=160632,o.value_text,null)) as remarks,
+
+               e.voided as voided
+        from encounter e
+               inner join
+                 (
+                 select encounter_type_id, uuid, name from encounter_type where uuid in('26bb869b-b569-4acd-b455-02c853e9f1e6')
+                 ) et on et.encounter_type_id=e.encounter_type
+               left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                          and o.concept_id in (162747,1284,163042,159948,159368,160632)
+        where e.voided=0
+        group by e.patient_id, e.encounter_id, visit_date;
+        SELECT "Completed processing chronic illness data ", CONCAT("Time: ", NOW());
+        END$$
+
+
+        -- ------------- populate sp_populate_etl_allergies--------------------------------
+
+        DROP PROCEDURE IF EXISTS sp_populate_etl_allergies$$
+        CREATE PROCEDURE sp_populate_etl_allergies()
+          BEGIN
+            SELECT "Processing chronic illness ", CONCAT("Time: ", NOW());
+            INSERT INTO kp_etl.etl_allergies(
+                uuid,
+                client_id,
+                visit_id,
+                visit_date,
+                location_id,
+                encounter_id,
+                encounter_provider,
+                date_created,
+                allergy_exists,
+                causative_agent,
+                reaction,
+                severity,
+                onset_date,
+                voided
+                )
+            select
+                   e.uuid,
+                   e.patient_id,
+                   e.visit_id,
+                   (e.encounter_datetime) as visit_date,
+                   e.location_id,
+                   e.encounter_id as encounter_id,
+                   e.creator,
+                   e.date_created as date_created,
+                   max(if(o.concept_id=5219,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as illness_exists,
+                   max(if(o.concept_id=160643,(case o.value_coded when 162543 then "Beef"
+                                                                  when 72609 then "Caffeine"
+                                                                  when 162544 then "Chocolate"
+                                                                  when 162545 then "Dairy Food"
+                                                                  when 162171 then "Eggs"
+                                                                  when 162546 then "Fish"
+                                                                  when 162547 then "Milk Protein"
+                                                                  when 162172 then "Peanuts"
+                                                                  when 162175 then "Shellfish"
+                                                                  when 162176 then "Soy"
+                                                                  when 162548 then "Strawberries"
+                                                                  when 162177 then "Wheat"
+                                                                  when 162542 then "Adhesive Tape"
+                                                                  when 162536 then "Bee Stings"
+                                                                  when 162537 then "Dust"
+                                                                  when 162538 then "Latex"
+                                                                  when 162539 then "Mold"
+                                                                  when 162540 then "Pollen"
+                                                                  when 162541 then "Ragweed"
+                                                                  when 5622 then "Other"
+                                                                  else "" end),null)) as causative_agent,
+                   max(if(o.concept_id=159935,(case o.value_coded when 1067 then "Unknown"
+                                                                  when 121629 then "Anaemia"
+                                                                  when 148888 then "Anaphylaxis"
+                                                                  when 148787 then "Angioedema"
+                                                                  when 120148 then "Arrhythmia"
+                                                                  when 108 then "Bronchospasm"
+                                                                  when 143264 then "Cough"
+                                                                  when 142412 then "Diarrhea"
+                                                                  when 118773 then "Dystonia"
+                                                                  when 140238 then "Fever"
+                                                                  when 140039 then "Flushing"
+                                                                  when 139581 then "GI upset"
+                                                                  when 139084 then "Headache"
+                                                                  when 159098 then "Hepatotoxicity"
+                                                                  when 111061 then "Hives"
+                                                                  when 117399 then "Hypertension"
+                                                                  when 879 then "Itching"
+                                                                  when 121677 then "Mental status change"
+                                                                  when 159347 then "Musculoskeletal pain"
+                                                                  when 121 then "Myalgia" else "" end) ,null)) as reaction,
+                   max(if(o.concept_id=162760,(case o.value_coded when 1498 then "Mild"
+                                                                  when 1499 then "Moderate"
+                                                                  when 1500 then "Severe"
+                                                                  when 162819 then "Fatal"
+                                                                  when 1067 then "Unknown"
+                                                                  else "" end) ,null)) as severity,
+                   max(if(o.concept_id=164428,o.value_datetime,null)) as onset_date,
+                   e.voided as voided
+            from encounter e
+                   inner join
+                     (
+                     select encounter_type_id, uuid, name from encounter_type where uuid in('119362fb-6af6-4462-9fb2-7a09c43c9874')
+                     ) et on et.encounter_type_id=e.encounter_type
+                   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                      and o.concept_id in (5219,160643,159935,162760,164428)
+            where e.voided=0
+            group by e.patient_id, e.encounter_id, visit_date;
+            SELECT "Completed processing allergies data ", CONCAT("Time: ", NOW());
+            END$$
+
+            -- ------------- populate sp_populate_etl_allergies--------------------------------
+
+            DROP PROCEDURE IF EXISTS etl_pregnancy_fp_cacx_screening$$
+            CREATE PROCEDURE sp_populate_etl_pregnancy_fp_cacx_screening()
+              BEGIN
+                SELECT "Processing Pregnancy,FP and CaCx screening ", CONCAT("Time: ", NOW());
+                INSERT INTO kp_etl.etl_pregnancy_fp_cacx_screening(
+                    uuid,
+                    client_id,
+                    visit_id,
+                    visit_date,
+                    location_id,
+                    encounter_id,
+                    encounter_provider,
+                    date_created,
+                    lmp,
+                    pregnant,
+                    edd,
+                    fp_status,
+                    elible_for_fp,
+                    fp_method,
+                    referred_for_fp,
+                    cacx_screening,
+                    cacx_screening_results,
+                    treated,
+                    referred,
+                    voided
+                    )
+                select
+                       e.uuid,
+                       e.patient_id,
+                       e.visit_id,
+                       (e.encounter_datetime) as visit_date,
+                       e.location_id,
+                       e.encounter_id as encounter_id,
+                       e.creator,
+                       e.date_created as date_created,
+                       max(if(o.concept_id=1427,o.value_datetime,null)) as lmp,
+                       max(if(o.concept_id=5272,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as pregnant,
+                       max(if(o.concept_id=5596,o.value_datetime,null)) as edd,
+                       max(if(o.concept_id=160653,(case o.value_coded when 965 then "On Family Planning"
+                                                                      when 160652 then "Not using Family Planning"
+                                                                      when 1360 then "Wants Family Planning"
+                                                                      else "" end),null)) as fp_status,
+                       max(if(o.concept_id=165067,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as eligible_for_fp,
+                       max(if(o.concept_id=374,(case o.value_coded  when 160570 then "Emergency contraceptive pills"
+                                                                    when 780 then "Oral Contraceptives Pills"
+                                                                    when 5279 then "Injectible"
+                                                                    when 1359 then "Implant"
+                                                                    when 5275 then "Intrauterine Device"
+                                                                    when 136163 then "Lactational Amenorhea Method"
+                                                                    when 5278 then "Diaphram/Cervical Cap"
+                                                                    when 5277 then "Fertility Awareness"
+                                                                    when 1472 then "Tubal Ligation"
+                                                                    when 190 then "Condoms"
+                                                                    when 1489 then "Vasectomy(Partner)"
+                                                                    when 162332 then "Undecided"
+                                                                    else "" end) ,null)) as fp_method,
+                       max(if(o.concept_id=165069,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as referred_for_fp,
+                       max(if(o.concept_id=164934,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as cacx_screening,
+                       max(if(o.concept_id=165026,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" else "" end),null)) as cacx_screening_results,
+                       max(if(o.concept_id=165038,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as treated,
+                       max(if(o.concept_id=1272,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as referred,
+                       e.voided as voided
+                from encounter e
+                       inner join
+                         (
+                         select encounter_type_id, uuid, name from encounter_type where uuid in('55d0b03e-8977-4d3e-8941-3333712b1afe')
+                         ) et on et.encounter_type_id=e.encounter_type
+                       left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                  and o.concept_id in (1427,5272,5596,160653,165067,374,165069,164934,165026,165038,1272)
+                where e.voided=0
+                group by e.patient_id, e.encounter_id, visit_date;
+                SELECT "Completed processing pregnancy, family planning and CaCz screening data ", CONCAT("Time: ", NOW());
+                END$$
+
+
+                -- ------------- populate sp_populate_etl_adverse_drug_reaction--------------------------------
+
+                DROP PROCEDURE IF EXISTS etl_adverse_drug_reaction$$
+                CREATE PROCEDURE sp_populate_etl_adverse_drug_reaction()
+                  BEGIN
+                    SELECT "Processing adverse drug reaction", CONCAT("Time: ", NOW());
+                    INSERT INTO kp_etl.etl_adverse_drug_reaction(
+                        uuid,
+                        client_id,
+                        visit_id,
+                        visit_date,
+                        location_id,
+                        encounter_id,
+                        encounter_provider,
+                        date_created,
+                        adverse_drug_reaction_exists,
+                        causative_drug,
+                        reaction,
+                        severity,
+                        onset_date,
+                        action_taken,
+                        voided
+                        )
+                    select
+                           e.uuid,
+                           e.patient_id,
+                           e.visit_id,
+                           (e.encounter_datetime) as visit_date,
+                           e.location_id,
+                           e.encounter_id as encounter_id,
+                           e.creator,
+                           e.date_created as date_created,
+                           max(if(o.concept_id=162867,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as adverse_drug_reaction_exists,
+                           max(if(o.concept_id=1193,(case o.value_coded when 70056 then "Abicavir"
+                                                                        when 162298 then "ACE inhibitors"
+                                                                        when 70878 then "Allopurinol"
+                                                                        when 155060 then "Aminoglycosides"
+                                                                        when 162299 then "ARBs (angiotensin II receptor blockers)"
+                                                                        when 103727 then "Aspirin"
+                                                                        when 71647 then "Atazanavir"
+                                                                        when 72822 then "Carbamazepine"
+                                                                        when 162301 then "Cephalosporins"
+                                                                        when 73300 then "Chloroquine"
+                                                                        when 73667 then "Codeine"
+                                                                        when 74807 then "Didanosine"
+                                                                        when 75523 then "Efavirenz"
+                                                                        when 162302 then "Erythromycins"
+                                                                        when 75948 then "Ethambutol"
+                                                                        when 77164 then "Griseofulvin"
+                                                                        when 162305 then "Heparins"
+                                                                        when 77675 then "Hydralazine"
+                                                                        when 78280 then "Isoniazid"
+                                                                        when 794 then "Lopinavir/ritonavir"
+                                                                        when 80106 then "Morphine"
+                                                                        when 80586 then "Nevirapine"
+                                                                        when 80696 then "Nitrofurans"
+                                                                        when 162306 then "Non-steroidal anti-inflammatory drugs"
+                                                                        when 81723 then "Penicillamine"
+                                                                        when 81724 then "Penicillin"
+                                                                        when 81959 then "Phenolphthaleins"
+                                                                        when 82023 then "Phenytoin"
+                                                                        when 82559 then "Procainamide"
+                                                                        when 82900 then "Pyrazinamide"
+                                                                        when 83018 then "Quinidine"
+                                                                        when 767 then "Rifampin"
+                                                                        when 162307 then "Statins"
+                                                                        when 84309 then "Stavudine"
+                                                                        when 162170 then "Sulfonamides"
+                                                                        when 84795 then "Tenofovir"
+                                                                        when 84893 then "Tetracycline"
+                                                                        when 86663 then "Zidovudine"
+                                                                        when 5622 then "Other"
+                                                                        else "" end),null)) as causative_drug,
+                           max(if(o.concept_id=159935,(case o.value_coded when 1067 then "Unknown"
+                                                                          when 121629 then "Anaemia"
+                                                                          when 148888 then "Anaphylaxis"
+                                                                          when 148787 then "Angioedema"
+                                                                          when 120148 then "Arrhythmia"
+                                                                          when 108 then "Bronchospasm"
+                                                                          when 143264 then "Cough"
+                                                                          when 142412 then "Diarrhea"
+                                                                          when 118773 then "Dystonia"
+                                                                          when 140238 then "Fever"
+                                                                          when 140039 then "Flushing"
+                                                                          when 139581 then "GI upset"
+                                                                          when 139084 then "Headache"
+                                                                          when 159098 then "Hepatotoxicity"
+                                                                          when 111061 then "Hives"
+                                                                          when 117399 then "Hypertension"
+                                                                          when 879 then "Itching"
+                                                                          when 121677 then "Mental status change"
+                                                                          when 159347 then "Musculoskeletal pain"
+                                                                          when 121 then "Myalgia"
+                                                                          when 512 then "Rash"
+                                                                          when 5622 then "Other"
+                                                                          else "" end),null)) as reaction,
+                           max(if(o.concept_id=162760,(case o.value_coded when 1498 then "Mild"
+                                                                          when 1499 then "Moderate"
+                                                                          when 1500 then "Severe"
+                                                                          when 162819 then "Fatal"
+                                                                          when 1067 then "Unknown"
+                                                                          else "" end),null)) as severity,
+                           max(if(o.concept_id=160753,o.value_datetime,null)) as onset_date,
+                           max(if(o.concept_id=1255,(case o.value_coded when 1257 then "CONTINUE REGIMEN"
+                                                                        when 1259 then "SWITCHED REGIMEN"
+                                                                        when 981 then "CHANGED DOSE"
+                                                                        when 1258 then "SUBSTITUTED DRUG"
+                                                                        when 1107 then "NONE"
+                                                                        when 1260 then "STOP"
+                                                                        when 5622 then "OTHER"
+                                                                        else "" end),null)) as action_taken,
+
+                           e.voided as voided
+                    from encounter e
+                           inner join
+                             (
+                             select encounter_type_id, uuid, name from encounter_type where uuid in('d7cfa460-2944-11e9-b210-d663bd873d93')
+                             ) et on et.encounter_type_id=e.encounter_type
+                           left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                              and o.concept_id in (162867,1193,159935,162760,160753,1255)
+                    where e.voided=0
+                    group by e.patient_id, e.encounter_id, visit_date;
+                    SELECT "Completed processing adverse drug reaction data ", CONCAT("Time: ", NOW());
+                    END$$
+
+
+                    -- ------------- populate sp_populate_etl_immunization_screening--------------------------------
+
+                    DROP PROCEDURE IF EXISTS etl_immunization_screening$$
+                    CREATE PROCEDURE sp_populate_etl_adverse_drug_reaction()
+                      BEGIN
+                        SELECT "Processing immunization screening", CONCAT("Time: ", NOW());
+                        INSERT INTO kp_etl.etl_immunization_screening(
+                            uuid,
+                            client_id,
+                            visit_id,
+                            visit_date,
+                            location_id,
+                            encounter_id,
+                            encounter_provider,
+                            date_created,
+                            immunization_done,
+                            immunization_type,
+                            immunization_date,
+                            immunization_side_effects,
+                            nature_of_side_effects,
+                            vaccine_validity,
+                            voided
+                            )
+                        select
+                               e.uuid,
+                               e.patient_id,
+                               e.visit_id,
+                               (e.encounter_datetime) as visit_date,
+                               e.location_id,
+                               e.encounter_id as encounter_id,
+                               e.creator,
+                               e.date_created as date_created,
+                               max(if(o.concept_id=5585,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as immunization_done,
+                               max(if(o.concept_id=984,(case o.value_coded when 5665 then "ARV Prophylaxis, Cervical Cancer Vaccine"
+                                                                           when 159711 then "Chickenpox (Varicella)"
+                                                                           when 73193 then "Cholera Vaccine"
+                                                                           when 73354 then "Diphtheria"
+                                                                           when 129850 then "Flu (Influenza)"
+                                                                           when 78032 then "Hepatitis A"
+                                                                           when 77424 then "Hepatitis B"
+                                                                           when 77429 then "Hib"
+                                                                           when 159696 then "Human Papillomavirus (HPV)"
+                                                                           when 159708 then "Measles"
+                                                                           when 79409 then "Meningococcal"
+                                                                           when 79554 then "Mumps"
+                                                                           when 80193 then "Pneumococcal"
+                                                                           when 82215 then "Polio"
+                                                                           when 82243 then "Rotavirus"
+                                                                           when 83533 then "Rubella"
+                                                                           when 83563 then "Tetanus"
+                                                                           when 129638 then "Whooping Cough (Pertussis)"
+                                                                           when 1656 then "Rabies"
+                                                                           when 83050 then "Smallpox"
+                                                                           when 129658 then "Typhoid Fever"
+                                                                           when 86022 then "Yellow Fever"
+
+                                                                           else "" end),null)) as immunization_type,
+                               max(if(o.concept_id=1410,o.value_datetime,null)) as immunization_date,
+                               max(if(o.concept_id=160325,(case o.value_coded when 1065 then "Yes" when 1066 then "No"
+                                                                     else "" end),null)) as immunization_side_effects,
+
+                               max(if(o.concept_id=163162,o.value_text,null)) as nature_of_side_effects,
+                               max(if(o.concept_id=160753,o.value_numeric,null)) as vaccine_validity,
+                               e.voided as voided
+                        from encounter e
+                               inner join
+                                 (
+                                 select encounter_type_id, uuid, name from encounter_type where uuid in('9b8c17cc-3420-11e9-b210-d663bd873d93')
+                                 ) et on et.encounter_type_id=e.encounter_type
+                               left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                  and o.concept_id in (5585,984,1410,160325,163162,160753)
+                        where e.voided=0
+                        group by e.patient_id, e.encounter_id, visit_date;
+                        SELECT "Completed processing Immunization screening data ", CONCAT("Time: ", NOW());
+                        END$$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 DROP PROCEDURE IF EXISTS sp_populate_etl_hiv_enrollment$$
 CREATE PROCEDURE sp_populate_etl_hiv_enrollment()
 BEGIN
@@ -2608,8 +3256,8 @@ other_support_systems
    max(if(o.concept_id=163766,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as support_grp_meeting_awareness,
    max(if(o.concept_id=163164,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as enrolled_in_reminder_system,
    max(if(o.concept_id=164360,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as other_support_systems
-    from openmrs.encounter e
-   inner join openmrs.obs o on e.encounter_id = o.encounter_id and o.voided =0
+    from encounter e
+   inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
  and o.concept_id in(1729,160246,159891,1048,164425,121764,5619,159707,163089,162695,160119,164886,163766,163164,164360)
    inner join
      (
@@ -2621,8 +3269,8 @@ other_support_systems
     o.person_id,
     o.encounter_id,
     o.obs_group_id
-     from openmrs.obs o
-    inner join openmrs.encounter e on e.encounter_id = o.encounter_id
+     from obs o
+    inner join encounter e on e.encounter_id = o.encounter_id
     inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('782a4263-3ac9-4ce8-b316-534571233f12')
      where o.voided=0
      group by e.encounter_id, o.obs_group_id
@@ -2723,8 +3371,8 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 				max(if(o.concept_id=165002,trim(o.value_text),null)) as adherence_plan,
 				max(if(o.concept_id=5096,o.value_time,null)) as next_appointment_
 
-			from openmrs.encounter e
-				inner join openmrs.obs o on e.encounter_id = o.encounter_id and o.voided =0
+			from encounter e
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 																		and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
 				inner join
 				(
@@ -2736,8 +3384,8 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 											o.person_id,
 											o.encounter_id,
 											o.obs_group_id
-										from openmrs.obs o
-											inner join openmrs.encounter e on e.encounter_id = o.encounter_id
+										from obs o
+											inner join encounter e on e.encounter_id = o.encounter_id
 											inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('c483f10f-d9ee-4b0d-9b8c-c24c1ec24701')
 										where o.voided=0
 										group by e.encounter_id, o.obs_group_id
@@ -2746,69 +3394,6 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 		SELECT "Completed processing Enhanced Adherence ", CONCAT("Time: ", NOW());
 		END$$
 
--- ------------- populate etl_patient_triage--------------------------------
-
-DROP PROCEDURE IF EXISTS sp_populate_etl_patient_triage$$
-CREATE PROCEDURE sp_populate_etl_patient_triage()
-	BEGIN
-		SELECT "Processing Patient Triage ", CONCAT("Time: ", NOW());
-		INSERT INTO kenyaemr_etl.etl_patient_triage(
-			uuid,
-			patient_id,
-			visit_id,
-			visit_,
-			location_id,
-			encounter_id,
-			encounter_provider,
-			_created,
-			visit_reason,
-			weight,
-			height,
-			systolic_pressure,
-			diastolic_pressure,
-			temperature,
-			pulse_rate,
-			respiratory_rate,
-			oxygen_saturation,
-			muac,
-			nutritional_status,
-			last_menstrual_period,
-			voided
-		)
-			select
-				e.uuid,
-				e.patient_id,
-				e.visit_id,
-				(e.encounter_time) as visit_,
-				e.location_id,
-				e.encounter_id as encounter_id,
-				e.creator,
-				e._created as _created,
-				max(if(o.concept_id=160430,trim(o.value_text),null)) as visit_reason,
-				max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
-				max(if(o.concept_id=5090,o.value_numeric,null)) as height,
-				max(if(o.concept_id=5085,o.value_numeric,null)) as systolic_pressure,
-				max(if(o.concept_id=5086,o.value_numeric,null)) as diastolic_pressure,
-				max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
-				max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
-				max(if(o.concept_id=5242,o.value_numeric,null)) as respiratory_rate,
-				max(if(o.concept_id=5092,o.value_numeric,null)) as oxygen_saturation,
-				max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
-				max(if(o.concept_id=163300,o.value_coded,null)) as nutritional_status,
-				max(if(o.concept_id=1427,(o.value_time),null)) as last_menstrual_period,
-				e.voided as voided
-			from encounter e
-				inner join
-				(
-					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542')
-				) et on et.encounter_type_id=e.encounter_type
-				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-				and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163300,1427)
-			where e.voided=0
-			group by e.patient_id, e.encounter_id, visit_
-		;
-		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
-		END$$
 
 		SET sql_mode=@OLD_SQL_MODE$$
 
