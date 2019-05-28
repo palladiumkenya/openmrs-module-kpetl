@@ -890,6 +890,789 @@ CREATE PROCEDURE sp_populate_etl_client_triage()
                         END$$
 
 
+                        -- ------------- populate sp_populate_etl_sti_screening--------------------------------
+
+                        DROP PROCEDURE IF EXISTS etl_sti_screening$$
+                        CREATE PROCEDURE sp_populate_etl_adverse_drug_reaction()
+                          BEGIN
+                            SELECT "Processing STI screening", CONCAT("Time: ", NOW());
+                            INSERT INTO kp_etl.etl_sti_screening(
+                                uuid,
+                                client_id,
+                                visit_id,
+                                visit_date,
+                                location_id,
+                                encounter_id,
+                                encounter_provider,
+                                date_created,
+                                sti_screening_done,
+                                reason,
+                                provider_name,
+                                voided
+                                )
+                            select
+                                   e.uuid,
+                                   e.patient_id,
+                                   e.visit_id,
+                                   (e.encounter_datetime) as visit_date,
+                                   e.location_id,
+                                   e.encounter_id as encounter_id,
+                                   e.creator,
+                                   e.date_created as date_created,
+                                   max(if(o.concept_id=161558,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as sti_screening_done,
+                                   max(if(o.concept_id=164082,(case o.value_coded when 1068 then "Symptomatic"
+                                                                                  when 5006 then "Asymptomatic"
+                                                                                  when 163139 then "Quartely Screening"
+                                                                                  when 160523 then "Follow up"
+                                                                                  else "" end),null)) as reason,
+                                   max(if(o.concept_id=1473,o.value_text,null)) as provider_name,
+
+                                   e.voided as voided
+                            from encounter e
+                                   inner join
+                                     (
+                                     select encounter_type_id, uuid, name from encounter_type where uuid in('83610d13-d4fc-42c3-8c1d-a403cd6dd073')
+                                     ) et on et.encounter_type_id=e.encounter_type
+                                   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                      and o.concept_id in (161558,164082,1473)
+                            where e.voided=0
+                            group by e.patient_id, e.encounter_id, visit_date;
+                            SELECT "Completed processing Immunization screening data ", CONCAT("Time: ", NOW());
+                            END$$
+
+                            -- ------------- populate sp_populate_etl_hepatitis_screening--------------------------------
+
+                            DROP PROCEDURE IF EXISTS etl_hepatitis_screening$$
+                            CREATE PROCEDURE sp_populate_etl_hepatitis_screening()
+                              BEGIN
+                                SELECT "Processing hepatitis screening", CONCAT("Time: ", NOW());
+                                INSERT INTO kp_etl.etl_hepatitis_screening(
+                                    uuid,
+                                    client_id,
+                                    visit_id,
+                                    visit_date,
+                                    location_id,
+                                    encounter_id,
+                                    encounter_provider,
+                                    date_created,
+                                    hepatitis_screening_done,
+                                    results,
+                                    treated,
+                                    referred,
+                                    remarks,
+                                    voided
+                                    )
+                                select
+                                       e.uuid,
+                                       e.patient_id,
+                                       e.visit_id,
+                                       (e.encounter_datetime) as visit_date,
+                                       e.location_id,
+                                       e.encounter_id as encounter_id,
+                                       e.creator,
+                                       e.date_created as date_created,
+                                       max(if(o.concept_id=164082,(case o.value_coded when 165019 then "Hepatitis B" when 165020 THEN "Hepatitis C" else "" end),null)) as hepatitis_screening_done,
+                                       max(if(o.concept_id=1322,(case o.value_coded when 664 then "Negative"
+                                                                                      when 703 then "Positive"
+                                                                                      when 782 then "Vaccinated"
+                                                                                      else "" end),null)) as results,
+                                       max(if(o.concept_id=165038,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as treated,
+                                       max(if(o.concept_id=1272,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as referred,
+                                       max(if(o.concept_id=160632,o.value_text,null)) as remarks,
+
+                                       e.voided as voided
+                                from encounter e
+                                       inner join
+                                         (
+                                         select encounter_type_id, uuid, name from encounter_type where uuid in('5c05a229-51b4-4b73-be13-0d93765a2a96')
+                                         ) et on et.encounter_type_id=e.encounter_type
+                                       left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                          and o.concept_id in (164082,1322,165038,1272,160632)
+                                where e.voided=0
+                                group by e.patient_id, e.encounter_id, visit_date;
+                                SELECT "Completed processing Hepatitis screening data ", CONCAT("Time: ", NOW());
+                                END$$
+
+
+
+                                -- ------------- populate sp_populate_etl_tb_screening--------------------------------
+
+                                DROP PROCEDURE IF EXISTS sp_populate_etl_tb_screening$$
+                                CREATE PROCEDURE sp_populate_etl_tb_screening()
+                                  BEGIN
+                                    SELECT "Processing TB screening", CONCAT("Time: ", NOW());
+                                    INSERT INTO kp_etl.etl_tb_screening(
+                                        uuid,
+                                        client_id,
+                                        visit_id,
+                                        visit_date,
+                                        location_id,
+                                        encounter_id,
+                                        encounter_provider,
+                                        date_created,
+                                        symptoms_present,
+                                        test_ordered,
+                                        sputum_smear_action,
+                                        chest_xray_action,
+                                        gene_xpert_action,
+                                        clinical_diagnosis,
+                                        invite_contacts,
+                                        ipt_evaluated,
+                                        tb_results_status,
+                                        start_anti_TB,
+                                        tb_treatment_date,
+                                        tb_treatment,
+                                        voided
+                                        )
+                                    select
+                                           e.uuid,
+                                           e.patient_id,
+                                           e.visit_id,
+                                           (e.encounter_datetime) as visit_date,
+                                           e.location_id,
+                                           e.encounter_id as encounter_id,
+                                           e.creator,
+                                           e.date_created as date_created,
+                                           max(if(o.concept_id=1729,(case o.value_coded when 159799 then "Cough of any duration"
+                                                                                        when 1494 then "fever"
+                                                                                        when 832 then "noticeable_weight_loss_poor_gain"
+                                                                                        when 133027 then "night_sweats"
+                                                                                        when 1066 THEN "None"
+                                                                                        else "" end),null)) as symptoms_present,
+                                           max(if(o.concept_id=1271,(case o.value_coded when 307 then "Sputum Smear" when 12 THEN "Chest Xray" when 162202 THEN "GeneXpert"else "" end),null)) as test_ordered,
+                                           max(if(o.concept_id=307,(case o.value_coded when 703 then "Positive" when 664 THEN "Negative" else "" end),null)) as sputum_smear_action,
+                                           max(if(o.concept_id=12,(case o.value_coded when 1115 then "Normal" when 152526 THEN "Abnormal" else "" end),null)) as chest_xray_action,
+                                           max(if(o.concept_id=162202,(case o.value_coded when 664 then "Negative" when 162203 THEN "Resistant TB Detected" when 162204 THEN "Non-Resistant TB Detected" when 164104 THEN "Indeterminate-Resistant TB Detected"
+                                                                                          when 163611 then "Invalid"
+                                                                                          when 1138 then "Indeterminate"
+                                                                                          else "" end),null)) as gene_xpert_action,
+                                           max(if(o.concept_id=163752,(case o.value_coded when 703 then "Positive" when 664 THEN "Negative" else "" end),null)) as clinical_diagnosis,
+                                           max(if(o.concept_id=163414,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as invite_contacts,
+                                           max(if(o.concept_id=162275,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as ipt_evaluated,
+                                           max(if(o.concept_id=1659,(case o.value_coded when 1660 then "No TB Signs" when 142177 THEN "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "TB Screening Not Done" else "" end),null)) as ipt_evaluated,
+                                           max(if(o.concept_id=162309,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as start_anti_TB,
+                                           max(if(o.concept_id=1113,o.value_datetime,null)) as tb_treatment_date,
+                                           max(if(o.concept_id=1111,o.value_coded,null)) as tb_treatment,
+                                           e.voided as voided
+                                    from encounter e
+                                           inner join
+                                             (
+                                             select encounter_type_id, uuid, name from encounter_type where uuid in('32e5ac6f-80cf-4908-aa88-200e3e199c68')
+                                             ) et on et.encounter_type_id=e.encounter_type
+                                           left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                              and o.concept_id in (1729,1271,307,12,162202,163752,163414,162275,
+                                                                                                   1659,162309,1113,1111)
+                                    where e.voided=0
+                                    group by e.patient_id, e.encounter_id, visit_date;
+                                    SELECT "Completed processing TB screening data ", CONCAT("Time: ", NOW());
+                                    END$$
+
+                                    -- ------------- populate sp_populate_etl_systems_review--------------------------------
+
+                                    DROP PROCEDURE IF EXISTS etl_systems_review$$
+                                    CREATE PROCEDURE sp_populate_etl_systems_review$$()
+                                      BEGIN
+                                        SELECT "Processing review of systems", CONCAT("Time: ", NOW());
+                                        INSERT INTO kp_etl.etl_systems_review(
+                                            uuid,
+                                            client_id,
+                                            visit_id,
+                                            visit_date,
+                                            location_id,
+                                            encounter_id,
+                                            encounter_provider,
+                                            date_created,
+                                            body_systems,
+                                            findings,
+                                            finding_notes,
+                                            voided
+                                            )
+                                        select
+                                               e.uuid,
+                                               e.patient_id,
+                                               e.visit_id,
+                                               (e.encounter_datetime) as visit_date,
+                                               e.location_id,
+                                               e.encounter_id as encounter_id,
+                                               e.creator,
+                                               e.date_created as date_created,
+                                               max(if(o.concept_id=164388,(case o.value_coded
+                                                                             when 1120 then "Skin"
+                                                                             when 163309 then "Eyes"
+                                                                             when 164936 then "ENT"
+                                                                             when 1123 then "Chest"
+                                                                             when 1124 then "CVS"
+                                                                             when 1125 then "Abdomen"
+                                                                             when 164937 then "CNS"
+                                                                             when 1126 then "Genitourinary"
+                                                                             else "" end),null)) as body_systems,
+                                               max(if(o.concept_id=1069,(case o.value_coded when 150555 then "Abscess"
+                                                                                            when 125201 then "Swelling/Growth"
+                                                                                            when 135591 then "Hair Loss"
+                                                                                            when 136455 then "Itching"
+                                                                                            when 507 then "Kaposi Sarcoma"
+                                                                                            when 1249 then "Skin eruptions/Rashes"
+                                                                                            when 5244 then "Oral sores"
+                                                                                            when 123074 then "Visual Disturbance"
+                                                                                            when 140940 then "Excessive tearing"
+                                                                                            when 131040 then "Eye pain"
+                                                                                            when 127777 then "Eye redness"
+                                                                                            when 140827 then "Light sensitive"
+                                                                                            when 139100 then "Itchy eyes"
+                                                                                            when 148517 then "Apnea"
+                                                                                            when 139075 then "Hearing disorder"
+                                                                                            when 119558 then "Dental caries"
+                                                                                            when 118536 then "Erythema"
+                                                                                            when 106 then "Frequent colds"
+                                                                                            when 147230 then "Gingival bleeding"
+                                                                                            when 135841 then "Hairy cell leukoplakia"
+                                                                                            when 117698 then "Hearing loss"
+                                                                                            when 138554 then "Hoarseness"
+                                                                                            when 507 then "Kaposi Sarcoma"
+                                                                                            when 152228 then "Masses"
+                                                                                            when 128055 then "Nasal discharge"
+                                                                                            when 133499 then "Nosebleed"
+                                                                                            when 160285 then "Pain"
+                                                                                            when 110099 then "Post nasal discharge"
+                                                                                            when 126423 then "Sinus problems"
+                                                                                            when 126318 then "Snoring"
+                                                                                            when 158843 then "Sore thoat"
+                                                                                            when 5244 then "Oral sores"
+                                                                                            when 5334 then "Thrush"
+                                                                                            when 123588 then "Tinnitus"
+                                                                                            when 124601 then "Toothache"
+                                                                                            when 123919 then "Ulcers"
+                                                                                            when 111525 then "Vertigo"
+                                                                                            when 146893 then "Bronchial breathing"
+                                                                                            when 127640 then "Crackles"
+                                                                                            when 145712 then "Dullness"
+                                                                                            when 164440 then "Reduced breathing"
+                                                                                            when 127639 then "Respiratory distress"
+                                                                                            when 5209 then "Wheezing"
+                                                                                            when 140147 then "Elevated blood pressure"
+                                                                                            when 136522 then "Irregular heartbeat"
+                                                                                            when 562 then "Cardiac murmur"
+                                                                                            when 130560 then "Cardiac rub"
+                                                                                            when 150915 then "Abdominal distension"
+                                                                                            when 5008 then "Hepatomegaly"
+                                                                                            when 5103 then "Abdominal mass"
+                                                                                            when 5009 then "Splenomegaly"
+                                                                                            when 5105 then "Abdominal tenderness"
+                                                                                            when 118872 then "Altered sensations"
+                                                                                            when 1836 then "Bulging fontenelle"
+                                                                                            when 150817 then "Abnormal reflexes"
+                                                                                            when 120345 then "Confusion"
+                                                                                            when 157498 then "Limb weakness"
+                                                                                            when 112721 then "Stiff neck"
+                                                                                            when 136282 then "Kernicterus"
+                                                                                            when 147241 then "Bleeding"
+                                                                                            when 154311 then "Rectal discharge"
+                                                                                            when 123529 then "Urethral discharge"
+                                                                                            when 123396 then "Vaginal discharge"
+                                                                                            when 124087 then "Ulceration"
+                                                                                            else "" end),null)) as findings,
+                                               max(if(o.concept_id=160632,o.value_text,null)) as findings_notes,
+                                               e.voided as voided
+                                        from encounter e
+                                               inner join
+                                                 (
+                                                 select encounter_type_id, uuid, name from encounter_type where uuid in('5568ab72-e951-4683-875e-c5781b6f7b81')
+                                                 ) et on et.encounter_type_id=e.encounter_type
+                                               left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                                  and o.concept_id in (164388,1069,160632)
+                                        where e.voided=0
+                                        group by e.patient_id, e.encounter_id, visit_date;
+                                        SELECT "Completed processing review of systems data ", CONCAT("Time: ", NOW());
+                                        END$$
+
+                                        -- ------------- populate sp_populate_etl_tb_screening--------------------------------
+
+                                        DROP PROCEDURE IF EXISTS sp_populate_etl_tb_screening$$
+                                        CREATE PROCEDURE sp_populate_etl_tb_screening()
+                                          BEGIN
+                                            SELECT "Processing TB screening", CONCAT("Time: ", NOW());
+                                            INSERT INTO kp_etl.etl_tb_screening(
+                                                uuid,
+                                                client_id,
+                                                visit_id,
+                                                visit_date,
+                                                location_id,
+                                                encounter_id,
+                                                encounter_provider,
+                                                date_created,
+                                                symptoms_present,
+                                                test_ordered,
+                                                sputum_smear_action,
+                                                chest_xray_action,
+                                                gene_xpert_action,
+                                                clinical_diagnosis,
+                                                invite_contacts,
+                                                ipt_evaluated,
+                                                tb_results_status,
+                                                start_anti_TB,
+                                                tb_treatment_date,
+                                                tb_treatment,
+                                                voided
+                                                )
+                                            select
+                                                   e.uuid,
+                                                   e.patient_id,
+                                                   e.visit_id,
+                                                   (e.encounter_datetime) as visit_date,
+                                                   e.location_id,
+                                                   e.encounter_id as encounter_id,
+                                                   e.creator,
+                                                   e.date_created as date_created,
+                                                   max(if(o.concept_id=1729,(case o.value_coded when 159799 then "Cough of any duration"
+                                                                                                when 1494 then "fever"
+                                                                                                when 832 then "noticeable_weight_loss_poor_gain"
+                                                                                                when 133027 then "night_sweats"
+                                                                                                when 1066 THEN "None"
+                                                                                                else "" end),null)) as symptoms_present,
+                                                   max(if(o.concept_id=1271,(case o.value_coded when 307 then "Sputum Smear" when 12 THEN "Chest Xray" when 162202 THEN "GeneXpert"else "" end),null)) as test_ordered,
+                                                   max(if(o.concept_id=307,(case o.value_coded when 703 then "Positive" when 664 THEN "Negative" else "" end),null)) as sputum_smear_action,
+                                                   max(if(o.concept_id=12,(case o.value_coded when 1115 then "Normal" when 152526 THEN "Abnormal" else "" end),null)) as chest_xray_action,
+                                                   max(if(o.concept_id=162202,(case o.value_coded when 664 then "Negative" when 162203 THEN "Resistant TB Detected" when 162204 THEN "Non-Resistant TB Detected" when 164104 THEN "Indeterminate-Resistant TB Detected"
+                                                                                                  when 163611 then "Invalid"
+                                                                                                  when 1138 then "Indeterminate"
+                                                                                                  else "" end),null)) as gene_xpert_action,
+                                                   max(if(o.concept_id=163752,(case o.value_coded when 703 then "Positive" when 664 THEN "Negative" else "" end),null)) as clinical_diagnosis,
+                                                   max(if(o.concept_id=163414,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as invite_contacts,
+                                                   max(if(o.concept_id=162275,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as ipt_evaluated,
+                                                   max(if(o.concept_id=1659,(case o.value_coded when 1660 then "No TB Signs" when 142177 THEN "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "TB Screening Not Done" else "" end),null)) as ipt_evaluated,
+                                                   max(if(o.concept_id=162309,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as start_anti_TB,
+                                                   max(if(o.concept_id=1113,o.value_datetime,null)) as tb_treatment_date,
+                                                   max(if(o.concept_id=1111,o.value_coded,null)) as tb_treatment,
+                                                   e.voided as voided
+                                            from encounter e
+                                                   inner join
+                                                     (
+                                                     select encounter_type_id, uuid, name from encounter_type where uuid in('32e5ac6f-80cf-4908-aa88-200e3e199c68')
+                                                     ) et on et.encounter_type_id=e.encounter_type
+                                                   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                                      and o.concept_id in (1729,1271,307,12,162202,163752,163414,162275,
+                                                    1659,162309,1113,1111)
+                                            where e.voided=0
+                                            group by e.patient_id, e.encounter_id, visit_date;
+                                            SELECT "Completed processing TB screening data ", CONCAT("Time: ", NOW());
+                                            END$$
+
+                                            -- ------------- populate sp_populate_etl_diagnosis_treatment-------------------------------
+
+                                            DROP PROCEDURE IF EXISTS sp_populate_etl_diagnosis_treatment$$
+                                            CREATE PROCEDURE sp_populate_etl_diagnosis_treatment()
+                                              BEGIN
+                                                SELECT "Processing Diagnosis and treatment plan", CONCAT("Time: ", NOW());
+                                                INSERT INTO kp_etl.etl_diagnosis_treatment(
+                                                    uuid,
+                                                    client_id,
+                                                    visit_id,
+                                                    visit_date,
+                                                    location_id,
+                                                    encounter_id,
+                                                    encounter_provider,
+                                                    date_created,
+                                                    diagnosis,
+                                                    treatment_plan,
+                                                    voided
+                                                    )
+                                                select
+                                                       e.uuid,
+                                                       e.patient_id,
+                                                       e.visit_id,
+                                                       (e.encounter_datetime) as visit_date,
+                                                       e.location_id,
+                                                       e.encounter_id as encounter_id,
+                                                       e.creator,
+                                                       e.date_created as date_created,
+                                                       max(if(o.concept_id=6042,o.value_coded,null)),
+                                                       max(if(o.concept_id=163104,o.value_text,null)),
+                                                       e.voided as voided
+                                                from encounter e
+                                                       inner join
+                                                         (
+                                                         select encounter_type_id, uuid, name from encounter_type where uuid in('928ea6b2-3425-4ee9-854d-daa5ceaade03')
+                                                         ) et on et.encounter_type_id=e.encounter_type
+                                                       left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                                          and o.concept_id in (6042,163104)
+                                                where e.voided=0
+                                                group by e.patient_id, e.encounter_id, visit_date;
+                                                SELECT "Completed processing TB screening data ", CONCAT("Time: ", NOW());
+                                                END$$
+
+                                                -- ------------- populate sp_populate_etl_clinical_notes-------------------------------
+
+                                                DROP PROCEDURE IF EXISTS sp_populate_etl_clinical_notes$$
+                                                CREATE PROCEDURE sp_populate_etl_clinical_notes()
+                                                  BEGIN
+                                                    SELECT "Processing clinical notes", CONCAT("Time: ", NOW());
+                                                    INSERT INTO kp_etl.etl_clinical_notes(
+                                                        uuid,
+                                                        client_id,
+                                                        visit_id,
+                                                        visit_date,
+                                                        location_id,
+                                                        encounter_id,
+                                                        encounter_provider,
+                                                        date_created,
+                                                        clinical_notes,
+                                                        voided
+                                                        )
+                                                    select
+                                                           e.uuid,
+                                                           e.patient_id,
+                                                           e.visit_id,
+                                                           (e.encounter_datetime) as visit_date,
+                                                           e.location_id,
+                                                           e.encounter_id as encounter_id,
+                                                           e.creator,
+                                                           e.date_created as date_created,
+                                                           max(if(o.concept_id=160632,o.value_text,null)),
+                                                           e.voided as voided
+                                                    from encounter e
+                                                           inner join
+                                                             (
+                                                             select encounter_type_id, uuid, name from encounter_type where uuid in('bcbf6e3f-a2fc-421b-90a3-473a3158c796')
+                                                             ) et on et.encounter_type_id=e.encounter_type
+                                                           left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                                              and o.concept_id in (160632)
+                                                    where e.voided=0
+                                                    group by e.patient_id, e.encounter_id, visit_date;
+                                                    SELECT "Completed processing clinical notes data ", CONCAT("Time: ", NOW());
+                                                    END$$
+
+
+
+
+                                                    -- ------------- populate sp_populate_etl_appointment-------------------------------
+
+                                                    DROP PROCEDURE IF EXISTS sp_populate_etl_appointment$$
+                                                    CREATE PROCEDURE sp_populate_etl_appointment()
+                                                      BEGIN
+                                                        SELECT "Processing appointments", CONCAT("Time: ", NOW());
+                                                        INSERT INTO kp_etl.etl_appointment(
+                                                            uuid,
+                                                            client_id,
+                                                            visit_id,
+                                                            visit_date,
+                                                            location_id,
+                                                            encounter_id,
+                                                            encounter_provider,
+                                                            date_created,
+                                                            appointment_date,
+                                                            appointment_type,
+                                                            appointment_notes,
+                                                            voided
+                                                            )
+                                                        select
+                                                               e.uuid,
+                                                               e.patient_id,
+                                                               e.visit_id,
+                                                               (e.encounter_datetime) as visit_date,
+                                                               e.location_id,
+                                                               e.encounter_id as encounter_id,
+                                                               e.creator,
+                                                               e.date_created as date_created,
+                                                               max(if(o.concept_id=5096,o.value_datetime,null)),
+                                                               max(if(o.concept_id=160288,(case o.value_coded
+                                                                                             when 160523 then "Follow up"
+                                                                                             when 1283 then "Lab tests"
+                                                                                             when 159382 then "Counseling"
+                                                                                             when 160521 then "Pharmacy Refill"
+                                                                                             when 5622 then "Other"
+                                                                                             else "" end),null)) as appointment_type,
+                                                               max(if(o.concept_id=163042,o.value_text,null)),
+                                                               e.voided as voided
+                                                        from encounter e
+                                                               inner join
+                                                                 (
+                                                                 select encounter_type_id, uuid, name from encounter_type where uuid in('66609dee-3438-11e9-b210-d663bd873d93')
+                                                                 ) et on et.encounter_type_id=e.encounter_type
+                                                               left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                                                  and o.concept_id in (5096,160288,163042)
+                                                        where e.voided=0
+                                                        group by e.patient_id, e.encounter_id, visit_date;
+                                                        SELECT "Completed processing appointments data ", CONCAT("Time: ", NOW());
+                                                        END$$
+
+                                                        -- ------------- populate sp_populate_etl_alcohol_drugs_risk_screening-------------------------------
+
+                                                        DROP PROCEDURE IF EXISTS sp_populate_etl_alcohol_drugs_risk_screening$$
+                                                        CREATE PROCEDURE sp_populate_etl_alcohol_drugs_risk_screening()
+                                                          BEGIN
+                                                            SELECT "Processing alcohol, drugs and risk screening", CONCAT("Time: ", NOW());
+                                                            INSERT INTO kp_etl.etl_alcohol_drugs_risk_screening(
+                                                                uuid,
+                                                                client_id,
+                                                                visit_id,
+                                                                visit_date,
+                                                                location_id,
+                                                                encounter_id,
+                                                                encounter_provider,
+                                                                date_created,
+                                                                screened_for,
+                                                                results,
+                                                                treated,
+                                                                referred,
+                                                                remarks,
+                                                                voided
+                                                                )
+                                                            select
+                                                                   e.uuid,
+                                                                   e.patient_id,
+                                                                   e.visit_id,
+                                                                   (e.encounter_datetime) as visit_date,
+                                                                   e.location_id,
+                                                                   e.encounter_id as encounter_id,
+                                                                   e.creator,
+                                                                   e.date_created as date_created,
+                                                                   max(if(o.concept_id=164082,(case o.value_coded when 165023 then "Alcohol" when 165025 then "Risk" when 165025 then "Drugs" else "" end),null)) as screened_for,
+                                                                   max(if(o.concept_id=165028,(case o.value_coded
+                                                                                                 when 664 then "Negative"
+                                                                                                 when 703 then "Positive"
+                                                                                                 else "" end),null)) as results,
+                                                                   max(if(o.concept_id=165038,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as treated,
+                                                                   max(if(o.concept_id=1272,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred,
+                                                                   max(if(o.concept_id=160632,o.value_text,null)),
+                                                                   e.voided as voided
+                                                            from encounter e
+                                                                   inner join
+                                                                     (
+                                                                     select encounter_type_id, uuid, name from encounter_type where uuid in('981c1420-4e83-4656-beb1-2461c45de532')
+                                                                     ) et on et.encounter_type_id=e.encounter_type
+                                                                   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                                                      and o.concept_id in (164082,165028,165038,1272,160632)
+                                                            where e.voided=0
+                                                            group by e.patient_id, e.encounter_id, visit_date;
+                                                            SELECT "Completed processing alcohol, drugs and risk assessment data ", CONCAT("Time: ", NOW());
+                                                            END$$
+
+                                                            -- ------------- populate sp_populate_etl_violence_screening-------------------------------
+                                                            DROP PROCEDURE IF EXISTS sp_populate_etl_violence_screening$$
+                                                            CREATE PROCEDURE sp_populate_etl_violence_screening()
+                                                              BEGIN
+                                                                SELECT "Processing violence screening", CONCAT("Time: ", NOW());
+
+                                                                INSERT INTO kp_etl.etl_violence_screening(
+                                                                uuid,
+                                                                client_id,
+                                                                visit_id,
+                                                                visit_date,
+                                                                location_id,
+                                                                encounter_id,
+                                                                encounter_provider,
+                                                                date_created,
+                                                                form_of_violence,
+                                                                place_of_violence,
+                                                                incident_date,
+                                                                target,
+                                                                perpetrator,
+                                                                intervention_date,
+                                                                referral_ordered,
+                                                                place_of_referral,
+                                                                referral_date,
+                                                                outcome_status,
+                                                                action_plan,
+                                                                resolution_date,
+                                                                program_officer_name,
+                                                                voided
+                                                                )
+                                                            select
+                                                                   e.uuid,
+                                                                   e.patient_id,
+                                                                   e.visit_id,
+                                                                   (e.encounter_datetime) as visit_date,
+                                                                   e.location_id,
+                                                                   e.encounter_id as encounter_id,
+                                                                   e.creator,
+                                                                   e.date_created as date_created,
+                                                                   max(if(o.concept_id=141814,(case o.value_coded
+                                                                                                 when 123007 then "Verbal abuse"
+                                                                                                 when 152292 then "Physical abuse"
+                                                                                                 when 126312 then "Discrimination"
+                                                                                                 when 152370 then "Sexual abuse/Rape"
+                                                                                                 when 156761 then "illegal arrest"
+                                                                                                 when 5622 then "other"
+                                                                                                 else "" end),null)) as form_of_violence,
+                                                                   max(if(o.concept_id=162721,o.value_text,null)),
+                                                                   max(if(o.concept_id=160753,o.value_datetime,null)),
+                                                                   max(if(o.concept_id=165013,(case o.value_coded
+                                                                                                 when 978 then "Self"
+                                                                                                 when 163488 then "Group"
+                                                                                                 else "" end),null)) as target,
+                                                                   max(if(o.concept_id=160658,(case o.value_coded
+                                                                                                 when 123163 then "Police"
+                                                                                                 when 5620 then "Family"
+                                                                                                 when 110360 then "Religeous group"
+                                                                                                 when 1540 then "Clients"
+                                                                                                 when 163096 then "Health care provider"
+                                                                                                 when 159928 then "Education institution"
+                                                                                                 when 133651 then "Local gangs"
+                                                                                                 else "" end),null)) as perpetrator,
+                                                                   max(if(o.concept_id=162869,o.value_datetime,null)),
+                                                                   max(if(o.concept_id=1272,(case o.value_coded
+                                                                                               when 1370 then "HIV Testing service"
+                                                                                               when 160570 then "Emergency contraception"
+                                                                                               when 162978 then "Reported to police"
+                                                                                               when 5490 then "Psychosocial counselling"
+                                                                                               when 1691 then "Pep provided"
+                                                                                               when 163559 then "STI Screening and treatment"
+                                                                                               when 162717 then "Legal support"
+                                                                                               when 432 then "Medical examination"
+                                                                                               when 123157 then "Post rape care form filled"
+                                                                                               when 5622 then "other"
+                                                                                               else "" end),null)) as referral_ordered,
+                                                                   max(if(o.concept_id=161550,o.value_text,null)),
+                                                                   max(if(o.concept_id=163181,o.value_datetime,null)),
+                                                                   max(if(o.concept_id=160433,(case o.value_coded
+                                                                                                 when 159 then "Dead"
+                                                                                                 when 162277 then "In prison"
+                                                                                                 when 1536 then "At home"
+                                                                                                 when 163321 then "In safe space"
+                                                                                                 when 5485 then "Hospitalized"
+                                                                                                 when 5622 then "other"
+                                                                                                 else "" end),null)) as outcome_status,
+                                                                   max(if(o.concept_id=164378,o.value_text,null)),
+                                                                   max(if(o.concept_id=161561,o.value_datetime,null)),
+                                                                   max(if(o.concept_id=164141,o.value_text,null)),
+
+                                                                   e.voided as voided
+                                                            from encounter e
+                                                                   inner join
+                                                                     (
+                                                                     select encounter_type_id, uuid, name from encounter_type where uuid in('7b69daf5-b567-4384-9d29-f020c408d613')
+                                                                     ) et on et.encounter_type_id=e.encounter_type
+                                                                   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                                                      and o.concept_id in (141814,162721,160753,165013,160658,162869,1272,161550,163181,160433,164378,161561,164141)
+                                                            where e.voided=0
+                                                            group by e.patient_id, e.encounter_id, visit_date;
+                                                            SELECT "Completed violence screening data ", CONCAT("Time: ", NOW());
+                                                            END$$
+
+
+
+                                                                -- ------------- populate sp_populate_counselling_services-------------------------------
+
+                                                                DROP PROCEDURE IF EXISTS sp_populate_counselling_services$$
+                                                                CREATE PROCEDURE sp_populate_counselling_services()
+                                                                  BEGIN
+                                                                    SELECT "Processing counselling services", CONCAT("Time: ", NOW());
+                                                                    INSERT INTO kp_etl.counselling_services(
+                                                                        uuid,
+                                                                        client_id,
+                                                                        visit_id,
+                                                                        visit_date,
+                                                                        location_id,
+                                                                        encounter_id,
+                                                                        encounter_provider,
+                                                                        date_created,
+                                                                        counselling_type,
+                                                                        referred,
+                                                                        remarks,
+                                                                        voided
+                                                                        )
+                                                                    select
+                                                                           e.uuid,
+                                                                           e.patient_id,
+                                                                           e.visit_id,
+                                                                           (e.encounter_datetime) as visit_date,
+                                                                           e.location_id,
+                                                                           e.encounter_id as encounter_id,
+                                                                           e.creator,
+                                                                           e.date_created as date_created,
+                                                                           max(if(o.concept_id=165056,(case o.value_coded
+                                                                                                         when 5490 then "Psychosocial counselling"
+                                                                                                         when 1370 then "HIV counselling"
+                                                                                                         when 161594 then "Condom use counselling"
+                                                                                                         when 155791 then "Counselling for alcoholism"
+                                                                                                         when 1382 then "Family planning"
+                                                                                                         when 1455 then "Tobacco use counselling"
+                                                                                                         when 164882 then "STD Prevention counselling"
+                                                                                                         when 5622 then "Other"
+                                                                                                         else "" end),null)) as counselling_type,
+                                                                           max(if(o.concept_id=1272,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)),
+                                                                           max(if(o.concept_id=160632,o.value_text,null)),
+                                                                           e.voided as voided
+                                                                    from encounter e
+                                                                           inner join
+                                                                             (
+                                                                             select encounter_type_id, uuid, name from encounter_type where uuid in('28883f27-dfd1-4ce5-89f0-2a4f87974d15')
+                                                                             ) et on et.encounter_type_id=e.encounter_type
+                                                                           left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                                                              and o.concept_id in (165056,1272,160632)
+                                                                    where e.voided=0
+                                                                    group by e.patient_id, e.encounter_id, visit_date;
+                                                                    SELECT "Completed processing counselling data ", CONCAT("Time: ", NOW());
+                                                                    END$$
+
+
+                                                                    -- ------------- populate sp_populate_etl_prep_pep_screening-------------------------------
+                                                                    DROP PROCEDURE IF EXISTS sp_populate_etl_prep_pep_screening$$
+                                                                    CREATE PROCEDURE sp_populate_etl_prep_pep_screening()
+                                                                      BEGIN
+                                                                        SELECT "Processing PrEp/PEp screening", CONCAT("Time: ", NOW());
+
+                                                                        INSERT INTO kp_etl.etl_prep_pep_screening(
+                                                                            uuid,
+                                                                            client_id,
+                                                                            visit_id,
+                                                                            visit_date,
+                                                                            location_id,
+                                                                            encounter_id,
+                                                                            encounter_provider,
+                                                                            date_created,
+                                                                            screened_for,
+                                                                            status,
+                                                                            referred,
+                                                                            using_pep,
+                                                                            exposure_type,
+                                                                            remarks,
+                                                                            voided
+                                                                            )
+                                                                        select
+                                                                               e.uuid,
+                                                                               e.patient_id,
+                                                                               e.visit_id,
+                                                                               (e.encounter_datetime) as visit_date,
+                                                                               e.location_id,
+                                                                               e.encounter_id as encounter_id,
+                                                                               e.creator,
+                                                                               e.date_created as date_created,
+                                                                               max(if(o.concept_id=164082,(case o.value_coded
+                                                                                                             when 164845 then "PEP Use"
+                                                                                                             when 165062 then "PrEP"
+                                                                                                             else "" end),null)) as screened_for,
+                                                                               max(if(o.concept_id=165028,(case o.value_coded
+                                                                                                             when 664 then "Negative"
+                                                                                                             when 703 then "Positive"
+                                                                                                             else "" end),null)) as status,
+                                                                               max(if(o.concept_id=1272,(case o.value_coded
+                                                                                                             when 1065 then "Yes"
+                                                                                                             when 1066 then "No"
+                                                                                                             else "" end),null)) as referred,
+                                                                               max(if(o.concept_id=164845,(case o.value_coded
+                                                                                                           when 1065 then "Yes"
+                                                                                                           when 1066 then "No"
+                                                                                                           else "" end),null)) as using_pep,
+                                                                               max(if(o.concept_id=165046,(case o.value_coded
+                                                                                                             when 127910 then "Rape"
+                                                                                                             when 165045 then "Condom burst"
+                                                                                                             when 160632 then "Others"
+                                                                                                             else "" end),null)) as exposure_type,
+                                                                               max(if(o.concept_id=160632,o.value_text,null)),
+
+                                                                               e.voided as voided
+                                                                        from encounter e
+                                                                               inner join
+                                                                                 (
+                                                                                 select encounter_type_id, uuid, name from encounter_type where uuid in('b06625d4-dfe4-458c-93fa-e878c8370733')
+                                                                                 ) et on et.encounter_type_id=e.encounter_type
+                                                                               left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                                                                  and o.concept_id in (164082,165028,1272,164845,160632 )
+                                                                        where e.voided=0
+                                                                        group by e.patient_id, e.encounter_id, visit_date;
+                                                                        SELECT "Completed PrEp/PEp screening data ", CONCAT("Time: ", NOW());
+                                                                        
 
 
 
