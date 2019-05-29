@@ -649,10 +649,10 @@ SELECT "Successfully created etl_pregnancy_fp_cacx_screening table";
     INDEX(exposure_type)
   );
   SELECT "Successfully created etl_prep_pep_screening table";
+drop table etl_hts_test;
 
 -- ------------ create table etl_hts_test-----------------------
 create table kp_etl.etl_hts_test (
-uuid CHAR(38),
 client_id INT(11) not null,
 visit_id INT(11) DEFAULT NULL,
 encounter_id INT(11) NOT NULL primary key,
@@ -687,8 +687,6 @@ tb_screening VARCHAR(20) DEFAULT NULL,
 patient_had_hiv_self_test VARCHAR(50) DEFAULT NULL,
 remarks VARCHAR(255) DEFAULT NULL,
 voided INT(11),
-CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
-CONSTRAINT unique_uuid UNIQUE(uuid),
 index(client_id),
 index(visit_id),
 index(tb_screening),
@@ -704,10 +702,9 @@ SELECT "Successfully created etl_hts_test table";
 
 
 -- ------------- create etl_hts_referral_and_linkage table ------------------------
-
+drop table etl_hts_referral_and_linkage;
 CREATE TABLE kp_etl.etl_hts_referral_and_linkage (
 client_id INT(11) not null,
-uuid CHAR(38),
 visit_id INT(11) DEFAULT NULL,
 encounter_id INT(11) NOT NULL primary key,
 encounter_uuid CHAR(38) NOT NULL,
@@ -725,8 +722,7 @@ provider_handed_to VARCHAR(100),
 provider_cadre VARCHAR(100),
 remarks VARCHAR(255),
 voided INT(11),
-CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
-CONSTRAINT unique_uuid UNIQUE(uuid),
+CONSTRAINT unique_uuid UNIQUE(encounter_uuid),
 index(client_id),
 index(visit_date),
 index(tracing_type),
@@ -735,33 +731,30 @@ index(tracing_status)
 
 SELECT "Successfully created etl_hts_referral_and_linkage table";
 
-
+drop table etl_client_tracing;
 -- ------------- create etl_client_tracing table ------------------------
 CREATE TABLE kp_etl.etl_client_tracing (
-uuid char(38),
-provider INT(11),
 client_id INT(11) NOT NULL ,
 visit_id INT(11),
 visit_date DATE,
 location_id INT(11) DEFAULT NULL,
+encounter_uuid CHAR(38) NOT NULL,
+provider INT(11),
 encounter_id INT(11) NOT NULL PRIMARY KEY,
 date_created DATE,
-tracing_attempt_date DATE,
-tracing_type INT(11),
-tracing_outcome INT(11),
+tracing_attempt_date DATETIME,
+tracing_type VARCHAR(100),
+tracing_outcome VARCHAR(100),
 negative_outcome_reason VARCHAR(100),
 negative_outcome_description VARCHAR(255),
 next_tracing_attempt_date DATE,
 final_tracing_status VARCHAR(100),
-cause_of_death INT(11),
-comments VARCHAR(100),
-CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
-CONSTRAINT unique_uuid UNIQUE(uuid),
+voided INT(11),
+CONSTRAINT unique_uuid UNIQUE(encounter_uuid),
 INDEX(visit_date),
 INDEX(encounter_id),
 INDEX(client_id),
 INDEX(final_tracing_status),
-INDEX(cause_of_death),
 INDEX(tracing_type)
 );
 SELECT "Successfully created etl_client_tracing table";
