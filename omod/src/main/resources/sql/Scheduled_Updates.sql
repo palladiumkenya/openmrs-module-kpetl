@@ -153,9 +153,24 @@ select
        e.encounter_id,
        e.creator,
        e.date_created,
-       max(if(o.concept_id=164930,(case o.value_coded when 165083 then "Female sex worker" when 160578 then "Male who have sex with Men" when 165084 then "Male sex worker" when 165085
-  then  "People who use drugs" when 105 then "People who inject drugs"  else "" end),null)) as key_population_type,
-       max(if(o.concept_id=165005,o.value_coded,null)) as hot_spot,
+       max(if(o.concept_id=164929,(case o.value_coded when 165083 then "Female sex worker" when 160578 then "Male who have sex with Men" when 165084 then "Male sex worker" when 165085
+then  "People who use drugs" when 105 then "People who inject drugs"  else "" end),null)) as key_population_type,
+       max(if(o.concept_id=165005,( case o.value_coded
+                                      when 165011 then "Street"
+                                      when 165012 then "Injecting den"
+                                      when 165013 then "Uninhabitable building"
+                                      when 165014 then "Public Park"
+                                      when 165015 then "Beach"
+                                      when 165016 then "Casino"
+                                      when 165017 then "Bar with lodging"
+                                      when 165018 then "Bar without lodging"
+                                      when 165019 then "Sex den"
+                                      when 165020 then "Strip club"
+                                      when 165021 then "Highway"
+                                      when 165022 then "Brothel"
+                                      when 165023 then "Guest house/hotel"
+                                      when 165025 then "illicit brew den"
+                                      when 165026 then "Barber shop/salon" else "" end),null)) as hot_spot,
        max(if(o.concept_id=165007,o.value_numeric,null)) as weekly_sex_acts,
        max(if(o.concept_id=165008,o.value_numeric,null)) as weekly_anal_sex_acts,
        max(if(o.concept_id=165009,o.value_numeric,null)) as daily_drug_injections,
@@ -163,12 +178,12 @@ select
        e.voided
 from encounter e
        inner join
- (
- select encounter_type_id, uuid, name from encounter_type where uuid='f02eea5e-1f42-11e9-ab14-d663bd873d93'
- ) et on et.encounter_type_id=e.encounter_type
+         (
+         select encounter_type_id, uuid, name from encounter_type where uuid='f02eea5e-1f42-11e9-ab14-d663bd873d93'
+         ) et on et.encounter_type_id=e.encounter_type
        join patient p on p.patient_id=e.patient_id and p.voided=0
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-  and o.concept_id in (164930,165005,165007,165008,165009,165010)
+                                  and o.concept_id in (164929,105, 165005,165007, 165008, 165009, 165010)
 where e.voided=0 and e.date_created >= last_update_time
 or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
@@ -1110,93 +1125,54 @@ voided=VALUES(voided)
 
 END$$
 
-
-
 -- ------------- populate sp_populate_etl_tb_screening--------------------------------
 
 DROP PROCEDURE IF EXISTS sp_populate_etl_tb_screening$$
 CREATE PROCEDURE sp_populate_etl_tb_screening(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing TB screening", CONCAT("Time: ", NOW());
-    INSERT INTO kp_etl.etl_tb_screening(
-uuid,
-client_id,
-visit_id,
-visit_date,
-location_id,
-encounter_id,
-encounter_provider,
-date_created,
-symptoms_present,
-test_ordered,
-sputum_smear_action,
-chest_xray_action,
-gene_xpert_action,
-clinical_diagnosis,
-invite_contacts,
-ipt_evaluated,
-tb_results_status,
-start_anti_TB,
-tb_treatment_date,
-tb_treatment,
-voided
-)
-    select
-   e.uuid,
-   e.patient_id,
-   e.visit_id,
-   (e.encounter_datetime) as visit_date,
-   e.location_id,
-   e.encounter_id as encounter_id,
-   e.creator,
-   e.date_created as date_created,
-   max(if(o.concept_id=1729,(case o.value_coded when 159799 then "Cough of any duration"
-when 1494 then "fever"
-when 832 then "noticeable_weight_loss_poor_gain"
-when 133027 then "night_sweats"
-when 1066 THEN "None"
-else "" end),null)) as symptoms_present,
-   max(if(o.concept_id=1271,(case o.value_coded when 307 then "Sputum Smear" when 12 THEN "Chest Xray" when 162202 THEN "GeneXpert"else "" end),null)) as test_ordered,
-   max(if(o.concept_id=307,(case o.value_coded when 703 then "Positive" when 664 THEN "Negative" else "" end),null)) as sputum_smear_action,
-   max(if(o.concept_id=12,(case o.value_coded when 1115 then "Normal" when 152526 THEN "Abnormal" else "" end),null)) as chest_xray_action,
-   max(if(o.concept_id=162202,(case o.value_coded when 664 then "Negative" when 162203 THEN "Resistant TB Detected" when 162204 THEN "Non-Resistant TB Detected" when 164104 THEN "Indeterminate-Resistant TB Detected"
-  when 163611 then "Invalid"
-  when 1138 then "Indeterminate"
-  else "" end),null)) as gene_xpert_action,
-   max(if(o.concept_id=163752,(case o.value_coded when 703 then "Positive" when 664 THEN "Negative" else "" end),null)) as clinical_diagnosis,
-   max(if(o.concept_id=163414,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as invite_contacts,
-   max(if(o.concept_id=162275,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as ipt_evaluated,
-   max(if(o.concept_id=1659,(case o.value_coded when 1660 then "No TB Signs" when 142177 THEN "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "TB Screening Not Done" else "" end),null)) as ipt_evaluated,
-   max(if(o.concept_id=162309,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as start_anti_TB,
-   max(if(o.concept_id=1113,o.value_datetime,null)) as tb_treatment_date,
-   max(if(o.concept_id=1111,o.value_coded,null)) as tb_treatment,
-   e.voided as voided
-    from encounter e
-   inner join
-     (
-     select encounter_type_id, uuid, name from encounter_type where uuid in('32e5ac6f-80cf-4908-aa88-200e3e199c68')
-     ) et on et.encounter_type_id=e.encounter_type
-   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-      and o.concept_id in (1729,1271,307,12,162202,163752,163414,162275,
-   1659,162309,1113,1111)
-    where e.voided=0
-    group by e.patient_id, e.encounter_id, visit_date
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),symptoms_present=VALUES(symptoms_present),
-test_ordered=VALUES(test_ordered),
-sputum_smear_action=VALUES(sputum_smear_action),
-chest_xray_action=VALUES(chest_xray_action),
-gene_xpert_action=VALUES(gene_xpert_action),
-clinical_diagnosis=VALUES(clinical_diagnosis),
-invite_contacts=VALUES(invite_contacts),
-ipt_evaluated=VALUES(ipt_evaluated),
+     insert into kp_etl.etl_tb_screening(
+             uuid,
+             client_id,
+             visit_id,
+             visit_date,
+             location_id,
+             encounter_id,
+             encounter_provider,
+             date_created,
+             tb_results_status,
+             start_anti_TB,
+             tb_treatment_date,
+             tb_treatment,
+             voided
+             )
+         select
+             e.uuid,
+             e.patient_id,
+             e.visit_id,
+             (e.encounter_datetime) as visit_date,
+             e.location_id,
+             e.encounter_id as encounter_id,
+             e.creator,
+             e.date_created as date_created,
+             max(if(o.concept_id=1659,(case o.value_coded when 1660 then "No TB Signs" when 142177 THEN "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "TB Screening Not Done" else "" end),null)) as tb_results_status,
+             max(if(o.concept_id=162309,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as start_anti_TB,
+             max(if(o.concept_id=1113,o.value_datetime,null)) as tb_treatment_date,
+             max(if(o.concept_id=1111,o.value_coded,null)) as tb_treatment,
+             e.voided as voided
+             from encounter e
+                inner join form f on f.form_id=e.form_id and f.uuid in ('22c68f86-bbf0-49ba-b2d1-23fa7ccf0259','59ed8e62-7f1f-40ae-a2e3-eabe350277ce')
+                inner join obs o on o.encounter_id = e.encounter_id
+         where e.voided=0
+         group by e.encounter_id
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
 tb_results_status=VALUES(tb_results_status),
 start_anti_TB=VALUES(start_anti_TB),
 tb_treatment_date=VALUES(tb_treatment_date),
 tb_treatment=VALUES(tb_treatment),
-voided=VALUES(voided)
-;
+voided=VALUES(voided);
 
-    END$$
+END$$
 
     -- ------------- populate sp_populate_etl_systems_review--------------------------------
 
