@@ -793,7 +793,7 @@ END$$
 
 -- ------------- populate sp_populate_etl_adverse_drug_reaction--------------------------------
 
-DROP PROCEDURE IF EXISTS etl_adverse_drug_reaction$$
+DROP PROCEDURE IF EXISTS sp_populate_etl_adverse_drug_reaction$$
 CREATE PROCEDURE sp_populate_etl_adverse_drug_reaction(IN last_update_time DATETIME)
   BEGIN
 
@@ -1009,10 +1009,10 @@ voided=VALUES(voided)
 END$$
 
 
--- ------------- populate sp_populate_etl_sti_screening--------------------------------
+-- ------------- populate sp_populate_sp_populate_etl_sti_screening--------------------------------
 
-DROP PROCEDURE IF EXISTS etl_sti_screening$$
-CREATE PROCEDURE sp_populate_etl_adverse_drug_reaction(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_populate_etl_sti_screening$$
+CREATE PROCEDURE sp_populate_etl_sti_screening(IN last_update_time DATETIME)
   BEGIN
 
     INSERT INTO kp_etl.etl_sti_screening(
@@ -1616,10 +1616,10 @@ END$$
 
 
 
--- ------------- populate sp_populate_counselling_services-------------------------------
+-- ------------- populate sp_populate_etl_counselling_services-------------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_counselling_services$$
-CREATE PROCEDURE sp_populate_counselling_services(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_populate_etl_counselling_services$$
+CREATE PROCEDURE sp_populate_etl_counselling_services(IN last_update_time DATETIME)
   BEGIN
 
     INSERT INTO kp_etl.counselling_services(
@@ -1751,8 +1751,8 @@ END$$
 
                       -- ------------------------------------ populate etl_hts_test table ----------------------------------------
 
-                      DROP PROCEDURE IF EXISTS sp_populate_hts_test$$
-                      CREATE PROCEDURE sp_populate_hts_test(IN last_update_time DATETIME)
+                      DROP PROCEDURE IF EXISTS sp_populate_etl_hts_test$$
+                      CREATE PROCEDURE sp_populate_etl_hts_test(IN last_update_time DATETIME)
                         BEGIN
 
                           INSERT INTO kp_etl.etl_hts_test (
@@ -2040,7 +2040,91 @@ voided=VALUES(voided)
 ;
 
 END$$
+-- ------------------------------------ Populate HIV status -------------------------------
 
+DROP PROCEDURE IF EXISTS sp_populate_etl_hiv_status$$
+CREATE PROCEDURE sp_populate_etl_hiv_status()
+  BEGIN
+SELECT "Processing hiv status";
+
+INSERT INTO kp_etl.etl_hiv_status(
+uuid ,
+provider,
+client_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+date_created,
+ever_tested,
+test_date,
+test_results_status,
+current_in_care,
+referral,
+art_start_date,
+treatment_facility,
+current_regimen,
+recent_vl_result,
+vl_test_date,
+provider_referred_to,
+voided
+
+)
+select
+   e.uuid,
+   e.creator,
+   e.patient_id,
+   e.visit_id,
+   e.encounter_datetime as visit_date,
+   e.location_id,
+   e.encounter_id,
+   e.date_created,
+   max(if(o.concept_id=164401,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null))as ever_tested,
+   max(if(o.concept_id=164400,o.value_datetime,null)) as test_date,
+   max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" else "" end),null)) as test_results_status,
+   max(if(o.concept_id=159811,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as current_in_care,
+   max(if(o.concept_id=164849,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referral,
+   max(if(o.concept_id=159599,o.value_datetime,null)) as art_start_date,
+   max(if(o.concept_id=162724,o.value_text,null)) as treatment_facility,
+   max(if(o.concept_id=162240,(case o.value_coded
+   when  84795 then  "TENOFOVIR"
+   when  164510 then  "TDF-ddl-NFV"
+   when  164509 then  "TDF-ddl-LPV /R"
+   when  104567 then  "EMTRICITABINE / TENOFOVIR DISOPROXIL"
+   when  162565 then  "Lamivudine / Nevirapine / Tenofovir"
+   when  164512 then  "TDF-3TC-ATV/r"
+   when  104565 then  "EFAVIRENZ / EMTRICITABINE / TENOFOVIR DISOPROXIL"
+   when  162201 then  "3TC, LPV/r, TDF"
+   when  164854 then  "Tenofovir / Emtricitabine / Nevirapine"
+   when  164971 then  "Tenofovir/Lamivudine/Zidovudine"
+   when  162562 then  "Abacavir / Lopinavir / Ritonavir / Tenofovir"
+   when  164974 then  "Etravirine/Tenofovir/Lamivudine/Lopinavir"
+   when  164972 then  "Zidovudine/Tenofovir/Lamivudine/Lopinavir"
+   when  161364 then  "lamivudine / tenofovir"
+   when  164969 then  "Tenofovir / Lamivudine / Dolutegravir"
+   when  164976 then  "Abacavir/Tenofovir/Lamivudine/Lopinavir"
+  else "" end),null)) as current_regimen,
+   max(if(o.concept_id=163042,o.value_text,null)) as recent_vl_result,
+   max(if(o.concept_id=162502,o.value_datetime,null)) as vl_test_date,
+   max(if(o.concept_id=1473,o.value_text,null)) as provider_referred_to,
+   e.voided as voided
+
+from encounter e
+inner join
+(
+select encounter_type_id, uuid, name from encounter_type where uuid in('5710da76-a36f-4c44-a67f-f76135b280dc')
+) et on et.encounter_type_id=e.encounter_type
+left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+  and o.concept_id in (164401,164400,159427,159811,164849,159599,162724,162240,163042,1473,162502)
+  and o.voided=0
+group by e.encounter_id
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),ever_tested=VALUES(ever_tested),
+test_date=VALUES(test_date),test_results_status=VALUES(test_results_status),current_in_care=VALUES(current_in_care),
+referral=VALUES(referral),art_start_date=VALUES(art_start_date),treatment_facility=VALUES(treatment_facility),
+current_regimen=VALUES(current_regimen),recent_vl_result=VALUES(recent_vl_result),vl_test_date=VALUES(vl_test_date),
+provider_referred_to=VALUES(provider_referred_to),voided=VALUES(voided);
+
+END$$
 
 		SET sql_mode=@OLD_SQL_MODE$$
 -- ----------------------------  scheduled updates ---------------------
@@ -2059,12 +2143,14 @@ SET update_script_id = LAST_INSERT_ID();
 CALL sp_populate_etl_client_registration();
 CALL sp_populate_etl_client_social_status();
 CALL sp_populate_etl_client_enrollment();
+CALL sp_populate_etl_triage();
 CALL sp_populate_etl_client_complaints();
 CALL sp_populate_etl_chronic_illness();
 CALL sp_populate_etl_allergies();
 CALL sp_populate_etl_pregnancy_fp_cacx_screening();
 CALL sp_populate_etl_adverse_drug_reaction();
 CALL sp_populate_etl_immunization_screening();
+CALL sp_populate_etl_sti_screening();
 CALL sp_populate_etl_hepatitis_screening();
 CALL sp_populate_etl_tb_screening();
 CALL sp_populate_etl_systems_review();
@@ -2073,11 +2159,12 @@ CALL sp_populate_etl_clinical_notes();
 CALL sp_populate_etl_appointment();
 CALL sp_populate_etl_alcohol_drugs_risk_screening();
 CALL sp_populate_etl_violence_screening();
-CALL sp_populate_counselling_services();
+CALL sp_populate_etl_counselling_services();
 CALL sp_populate_etl_prep_pep_screening();
-CALL sp_populate_hts_test();
+CALL sp_populate_etl_hts_test();
 CALL sp_populate_etl_hts_referral_and_linkage();
 CALL sp_populate_etl_client_tracing();
+CALL sp_populate_etl_hiv_status();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
 DELETE FROM kenyaemr_etl.etl_script_status where script_name in ("KenyaEMR_Data_Tool", "scheduled_updates") and start_time < DATE_SUB(NOW(), INTERVAL 12 HOUR);
