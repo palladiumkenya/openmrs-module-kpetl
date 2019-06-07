@@ -1757,8 +1757,8 @@ select
    max(if(o.concept_id=164966,(case o.value_coded when 1650 then "Phone" when 164965 then "Physical" else "" end),null)) as tracing_type ,
    max(if(o.concept_id=159811,(case o.value_coded when 1065 then "Contacted and linked" when 1066 then "Contacted but not linked" else "" end),null)) as tracing_status,
    max(if(o.concept_id=162724,trim(o.value_text),null)) as facility_linked_to,
-   max(if(o.concept_id=160555,o.value_datetime,null)) as enrollment_,
-   max(if(o.concept_id=159599,o.value_datetime,null)) as art_start_,
+   max(if(o.concept_id=160555,o.value_datetime,null)) as enrollment_date,
+   max(if(o.concept_id=159599,o.value_datetime,null)) as art_start_date,
    max(if(o.concept_id=162053,o.value_numeric,null)) as ccc_number,
    max(if(o.concept_id=1473,trim(o.value_text),null)) as provider_handed_to,
    max(if(o.concept_id=162577,(case o.value_coded when 1577 then "Nurse"

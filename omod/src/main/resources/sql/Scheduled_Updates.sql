@@ -42,11 +42,16 @@ p.death_date
 from person p
 left join patient pa on pa.patient_id=p.person_id
 left join person_name pn on pn.person_id = p.person_id and pn.voided=0
-where p.voided=0
+where pn.date_created >= last_update_time
+or pn.date_changed >= last_update_time
+or pn.date_voided >= last_update_time
+or p.date_created >= last_update_time
+or p.date_changed >= last_update_time
+or p.date_voided >= last_update_time
 GROUP BY p.person_id
 ) p
 ON DUPLICATE KEY UPDATE
- iven_name = p.given_name,
+ given_name = p.given_name,
  middle_name=p.middle_name,
  family_name=p.family_name,
  DOB = p.birthdate,
@@ -184,7 +189,7 @@ from encounter e
        join patient p on p.patient_id=e.patient_id and p.voided=0
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                   and o.concept_id in (164929,105, 165005,165007, 165008, 165009, 165010)
-where e.voided=0 and e.date_created >= last_update_time
+and e.voided=0 where e.date_created >= last_update_time
 or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
 or o.date_created >= last_update_time
@@ -278,7 +283,11 @@ from encounter e
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
   and o.concept_id in (160540,165004,1473,165027,161135,165028,159635,165029,165030,
        165031,165032,123160,165033,165013,165035,165036,164966,160638,165038,160642,159635,161011)
-where e.voided=0
+and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
 group by e.patient_id, e.encounter_id
 order by e.patient_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),enrollment_service_area=VALUES(enrollment_service_area),
@@ -369,7 +378,11 @@ from encounter e
  ) et on et.encounter_type_id=e.encounter_type
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
   and o.concept_id in (5089,5090,5085,5086,5088,5087,5242,5092)
-where e.voided=0
+and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
 group by e.patient_id, e.encounter_id, visit_date
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
 weight=VALUES(weight),
@@ -499,7 +512,11 @@ when 5622 then "Other" else "" end),null)) as complaint_type,
      ) et on et.encounter_type_id=e.encounter_type
    left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
       and o.concept_id in (5219,124957,163042,159948,159368,160632)
-    where e.voided=0
+    and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
     group by e.patient_id, e.encounter_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
     complaint_exists=VALUES(complaint_exists),
@@ -587,7 +604,11 @@ from encounter e
  ) et on et.encounter_type_id=e.encounter_type
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
   and o.concept_id in (162747,1284,163042,159948,159368,160632)
-where e.voided=0
+and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
 group by e.patient_id, e.encounter_id, visit_date
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),illness_exists,=VALUES(illness_exists,),
 illness_type,=VALUES(illness_type),
@@ -689,7 +710,11 @@ voided
      ) et on et.encounter_type_id=e.encounter_type
    left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
       and o.concept_id in (5219,160643,159935,162760,164428)
-    where e.voided=0
+    and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
     group by e.patient_id, e.encounter_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),allergy_exists=VALUES(allergy_exists),
 causative_agent=VALUES(causative_agent),
@@ -772,7 +797,11 @@ from encounter e
  ) et on et.encounter_type_id=e.encounter_type
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
   and o.concept_id in (1427,5272,5596,160653,165087,374,165082,164934,165086,165052,1272)
-where e.voided=0
+and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
 group by e.patient_id, e.encounter_id, visit_date
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),lmp=VALUES(lmp),
 pregnant=VALUES(pregnant),
@@ -911,7 +940,11 @@ else "" end),null)) as action_taken,
      ) et on et.encounter_type_id=e.encounter_type
    left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
       and o.concept_id in (162867,1193,159935,162760,160753,1255)
-    where e.voided=0
+    and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
     group by e.patient_id, e.encounter_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),adverse_drug_reaction_exists=VALUES(adverse_drug_reaction_exists),
 causative_drug=VALUES(causative_drug),
@@ -995,7 +1028,11 @@ from encounter e
  ) et on et.encounter_type_id=e.encounter_type
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
   and o.concept_id in (5585,984,1410,160325,163162,160753)
-where e.voided=0
+and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
 group by e.patient_id, e.encounter_id, visit_date
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),immunization_done=VALUES(immunization_done),
 immunization_type=VALUES(immunization_type),
@@ -1054,7 +1091,11 @@ voided
      ) et on et.encounter_type_id=e.encounter_type
    left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
       and o.concept_id in (161558,164082,1473)
-    where e.voided=0
+    and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
     group by e.patient_id, e.encounter_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),sti_screening_done=VALUES(sti_screening_done),
 reason=VALUES(reason),
@@ -1112,7 +1153,11 @@ from encounter e
  ) et on et.encounter_type_id=e.encounter_type
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
   and o.concept_id in (164082,1322,165038,1272,160632)
-where e.voided=0
+and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
 group by e.patient_id, e.encounter_id, visit_date
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),hepatitis_screening_done=VALUES(hepatitis_screening_done),
 results=VALUES(results),
@@ -1163,7 +1208,11 @@ CREATE PROCEDURE sp_populate_etl_tb_screening(IN last_update_time DATETIME)
              from encounter e
                 inner join form f on f.form_id=e.form_id and f.uuid in ('22c68f86-bbf0-49ba-b2d1-23fa7ccf0259','59ed8e62-7f1f-40ae-a2e3-eabe350277ce')
                 inner join obs o on o.encounter_id = e.encounter_id
-         where e.voided=0
+         and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
          group by e.encounter_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
 tb_results_status=VALUES(tb_results_status),
@@ -1287,7 +1336,11 @@ from encounter e
  ) et on et.encounter_type_id=e.encounter_type
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
   and o.concept_id in (164388,1069,160632)
-where e.voided=0
+and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
 group by e.patient_id, e.encounter_id, visit_date
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),body_systems=VALUES(body_systems),
 findings=VALUES(findings),
@@ -1336,7 +1389,11 @@ from encounter e
  ) et on et.encounter_type_id=e.encounter_type
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
   and o.concept_id in (6042,163104)
-where e.voided=0
+and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
 group by e.patient_id, e.encounter_id, visit_date
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),diagnosis=VALUES(diagnosis),
 treatment_plan=VALUES(treatment_plan),
@@ -1381,7 +1438,11 @@ voided
      ) et on et.encounter_type_id=e.encounter_type
    left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
       and o.concept_id in (160632)
-    where e.voided=0
+    and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
     group by e.patient_id, e.encounter_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),clinical_notes=VALUES(clinical_notes),
 voided=VALUES(voided)
@@ -1436,7 +1497,11 @@ from encounter e
  ) et on et.encounter_type_id=e.encounter_type
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
   and o.concept_id in (5096,160288,163042)
-where e.voided=0
+and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
 group by e.patient_id, e.encounter_id, visit_date
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),appointment_date=VALUES(appointment_date),
 appointment_type=VALUES(appointment_type),
@@ -1493,7 +1558,11 @@ voided
      ) et on et.encounter_type_id=e.encounter_type
    left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
       and o.concept_id in (164082,165047,165038,1272,160632)
-    where e.voided=0
+    and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
     group by e.patient_id, e.encounter_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),screened_for=VALUES(screened_for),
 results=VALUES(results),
@@ -1601,7 +1670,11 @@ voided
      ) et on et.encounter_type_id=e.encounter_type
    left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
       and o.concept_id in (141814,162721,160753,165013,160658,162869,1272,161550,163181,160433,164378,161561,164141)
-    where e.voided=0
+    and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
     group by e.patient_id, e.encounter_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),form_of_violence=VALUES(form_of_violence),
 place_of_violence=VALUES(place_of_violence),
@@ -1665,7 +1738,11 @@ voided
      ) et on et.encounter_type_id=e.encounter_type
    left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
       and o.concept_id in (165070,1272,160632)
-    where e.voided=0
+    and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
     group by e.patient_id, e.encounter_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),counselling_type=VALUES(counselling_type),
 referred=VALUES(referred),
@@ -1736,7 +1813,11 @@ from encounter e
  ) et on et.encounter_type_id=e.encounter_type
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
   and o.concept_id in (164082,165028,1272,164845,165060,160632 )
-where e.voided=0
+and e.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
 group by e.patient_id, e.encounter_id, visit_date
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),screened_for=VALUES(screened_for),
 status=VALUES(status),
@@ -1867,7 +1948,11 @@ END$$
                                             from obs o
                                                    inner join encounter e on e.encounter_id = o.encounter_id
                                                    inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
-                                            where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
+                                            where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0 where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
                                             group by e.encounter_id, o.obs_group_id
                                             ) t on e.encounter_id = t.encounter_id
                           group by e.encounter_id
@@ -1953,6 +2038,11 @@ voided=VALUES(voided)
                               from encounter e
                                      inner join form f on f.form_id = e.form_id and f.uuid = "050a7f12-5c52-4cad-8834-863695af335d"
                                      left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473, 162577, 163042) and o.voided=0
+                                     where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
                               group by e.encounter_id
                               ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),tracing_type=VALUES(tracing_type),
 tracing_status=VALUES(tracing_status),
@@ -2028,6 +2118,11 @@ END$$
                                   from encounter e
                                          inner join form f on f.form_id = e.form_id and f.uuid = "050a7f12-5c52-4cad-8834-863695af335d"
                                          left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162502,164966,160721, 165071,163042, 162502, 165068) and o.voided=0
+                                         and e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
                                   group by e.encounter_id
                                   ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),tracing_attempt_date=VALUES(tracing_attempt_date),
 tracing_type=VALUES(tracing_type),
@@ -2116,7 +2211,11 @@ select encounter_type_id, uuid, name from encounter_type where uuid in('5710da76
 ) et on et.encounter_type_id=e.encounter_type
 left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
   and o.concept_id in (164401,164400,159427,159811,164849,159599,162724,162240,163042,1473,162502)
-  and o.voided=0
+  and o.voided=0 and e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
 group by e.encounter_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),ever_tested=VALUES(ever_tested),
 test_date=VALUES(test_date),test_results_status=VALUES(test_results_status),current_in_care=VALUES(current_in_care),
@@ -2135,9 +2234,9 @@ CREATE PROCEDURE sp_scheduled_updates()
 BEGIN
 DECLARE update_script_id INT(11);
 DECLARE last_update_time DATETIME;
-SELECT max(start_time) into last_update_time from kenyaemr_etl.etl_script_status where stop_time is not null or stop_time !="";
+SELECT max(start_time) into last_update_time from kp_etl.etl_script_status where stop_time is not null or stop_time !="";
 
-INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('scheduled_updates', NOW());
+INSERT INTO kp_etl.etl_script_status(script_name, start_time) VALUES('scheduled_updates', NOW());
 SET update_script_id = LAST_INSERT_ID();
 
 CALL sp_populate_etl_client_registration();
@@ -2166,8 +2265,8 @@ CALL sp_populate_etl_hts_referral_and_linkage();
 CALL sp_populate_etl_client_tracing();
 CALL sp_populate_etl_hiv_status();
 
-UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
-DELETE FROM kenyaemr_etl.etl_script_status where script_name in ("KenyaEMR_Data_Tool", "scheduled_updates") and start_time < DATE_SUB(NOW(), INTERVAL 12 HOUR);
+UPDATE kp_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
+DELETE FROM kp_etl.etl_script_status where script_name in ("KenyaEMR_Data_Tool", "scheduled_updates") and start_time < DATE_SUB(NOW(), INTERVAL 12 HOUR);
 SELECT update_script_id;
 
 END$$
