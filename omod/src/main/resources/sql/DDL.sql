@@ -26,6 +26,10 @@ CREATE PROCEDURE create_etl_tables()
     DROP TABLE IF EXISTS kp_etl.etl_client_registration;
     DROP TABLE IF EXISTS kp_etl.etl_contact;
     DROP TABLE IF EXISTS kp_etl.etl_client_enrollment;
+    DROP TABLE IF EXISTS kp_etl.etl_clinical_visit;
+    DROP TABLE IF EXISTS kp_etl.etl_peer_calendar;
+    DROP TABLE IF EXISTS kp_etl.etl_sti_Treatment;
+    /*
     DROP TABLE IF EXISTS kp_etl.etl_triage;
     DROP TABLE IF EXISTS kp_etl.etl_client_complaints;
     DROP TABLE IF EXISTS kp_etl.etl_chronic_illness;
@@ -48,12 +52,11 @@ CREATE PROCEDURE create_etl_tables()
     DROP TABLE IF EXISTS kp_etl.etl_hts_test;
     DROP TABLE IF EXISTS kp_etl.etl_hts_referral_and_linkage;
     DROP TABLE IF EXISTS kp_etl.etl_client_tracing;
-    DROP TABLE IF EXISTS kp_etl.etl_hiv_status;
+    DROP TABLE IF EXISTS kp_etl.etl_hiv_status;*/
 
     -- create table etl_client_registration
     create table kp_etl.etl_client_registration (
       client_id INT(11) not null primary key,
-      unique_patient_no VARCHAR(50),
       registration_date DATE,
       given_name VARCHAR(255),
       middle_name VARCHAR(255),
@@ -76,7 +79,6 @@ CREATE PROCEDURE create_etl_tables()
       death_date DATE DEFAULT NULL,
       voided INT(11),
       index(client_id),
-      index(unique_patient_no),
       index(Gender),
       index(registration_date),
       index(DOB)
@@ -100,9 +102,9 @@ CREATE PROCEDURE create_etl_tables()
       program_name VARCHAR(255),
       frequent_hotspot_name VARCHAR(255),
       frequent_hotspot_type VARCHAR(255),
-      year_started_sex_work VARCHAR(50),
-      year_started_sex_with_men VARCHAR(50),
-      year_started_drugs VARCHAR(50),
+      year_started_sex_work VARCHAR(10),
+      year_started_sex_with_men VARCHAR(10),
+      year_started_drugs VARCHAR(10),
       avg_weekly_sex_acts int(11),
       avg_weekly_anal_sex_acts int(11),
       avg_weekly_drug_injections int(11),
@@ -139,7 +141,7 @@ CREATE PROCEDURE create_etl_tables()
       has_expereienced_physical_violence VARCHAR(10),
       ever_tested_for_hiv VARCHAR(10),
       test_type VARCHAR(255),
-      share_test_results VARCHAR(10),
+      share_test_results VARCHAR(100),
       willing_to_test VARCHAR(10),
       test_decline_reason VARCHAR(255),
       receiving_hiv_care VARCHAR(10),
@@ -246,8 +248,8 @@ CREATE PROCEDURE create_etl_tables()
       facility_linked_to VARCHAR(10),
       self_test_education VARCHAR(10),
       self_test_kits_given VARCHAR(100),
-      self_use_kits int (10),
-      distribution_kits int (10),
+      self_use_kits VARCHAR (10),
+      distribution_kits VARCHAR (10),
       self_tested VARCHAR(10),
       self_test_date DATE,
       self_test_frequency VARCHAR(100),
@@ -255,8 +257,8 @@ CREATE PROCEDURE create_etl_tables()
       test_confirmatory_results VARCHAR(100),
       confirmatory_facility VARCHAR(100),
       offsite_confirmatory_facility VARCHAR(100),
-      linked_to_art VARCHAR(10),
-      link_facility VARCHAR(255),
+      self_test_linked_art VARCHAR(10),
+      self_test_link_facility VARCHAR(255),
       hiv_care_facility VARCHAR(255),
       other_hiv_care_facility VARCHAR(255),
       initiated_art_this_month VARCHAR(10),
@@ -279,7 +281,8 @@ CREATE PROCEDURE create_etl_tables()
       voided INT(11),
       constraint foreign key(client_id) references kp_etl.etl_client_registration(client_id),
       CONSTRAINT unique_uuid UNIQUE(uuid),
-      index(client_id)
+      index(client_id),
+      index(client_id,visit_date)
     );
     SELECT "Successfully created etl_clinical_visit table";
 
@@ -353,6 +356,47 @@ CREATE PROCEDURE create_etl_tables()
 
     SELECT "Successfully created etl_peer_calendar table";
 
+        -- ------------ create table etl_sti_Treatment-----------------------
+    CREATE TABLE kp_etl.etl_sti_Treatment (
+      uuid CHAR(38),
+      encounter_id INT(11) NOT NULL PRIMARY KEY,
+      client_id INT(11) NOT NULL ,
+      location_id INT(11) DEFAULT NULL,
+      visit_date DATE,
+      visit_id INT(11),
+      encounter_provider INT(11),
+      date_created DATE,
+      visit_reason VARCHAR(255),
+      syndrome VARCHAR(255),
+      other_syndrome VARCHAR(255),
+      drug_prescription VARCHAR(255),
+      other_drug_prescription VARCHAR(255),
+      genital_exam_done VARCHAR(10),
+      lab_referral VARCHAR(10),
+      lab_form_number VARCHAR(100),
+      referred_to_facility VARCHAR(10),
+      facility_nmae VARCHAR(255),
+      partner_referral_done VARCHAR(10),
+      given_lubes VARCHAR(10),
+      no_of_lubes INT(10),
+      given_condoms VARCHAR(10),
+      no_of_condoms INT(10),
+      provider_comments VARCHAR(255),
+      provider_name VARCHAR(255),
+      appointment_date DATE,
+      voided INT(11),
+      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
+      CONSTRAINT unique_uuid UNIQUE(uuid),
+      INDEX(visit_date),
+      INDEX(encounter_id),
+      INDEX(client_id),
+      INDEX(visit_reason),
+      INDEX(given_lubes),
+      INDEX(given_condoms)
+    );
+
+    SELECT "Successfully created etl_sti_Treatment table";
+/*
     -- ------------ create table etl_triage-----------------------
     CREATE TABLE kp_etl.etl_triage (
       uuid CHAR(38),
@@ -985,7 +1029,7 @@ CREATE PROCEDURE create_etl_tables()
     );
     SELECT "Successfully created etl_hiv_status table";
 
-
+*/
     UPDATE kp_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 
