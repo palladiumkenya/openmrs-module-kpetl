@@ -138,7 +138,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
             year_started_drugs,
             avg_weekly_sex_acts,
             avg_weekly_anal_sex_acts,
-            avg_weekly_drug_injections,
+            avg_daily_drug_injections,
             contact_person_name,
             contact_person_alias,
             contact_person_phone,
@@ -184,13 +184,13 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                max(if(o.concept_id=165038,o.value_text,null)) as contact_person_alias,
                max(if(o.concept_id=160642,o.value_text,null)) as contact_person_phone,
                e.voided
-        from encounter e
+        from openmrs.encounter e
                inner join
                  (
-                 select encounter_type_id, uuid, name from encounter_type where uuid='ea68aad6-4655-4dc5-80f2-780e33055a9e'
+                 select encounter_type_id, uuid, name from openmrs.encounter_type where uuid='ea68aad6-4655-4dc5-80f2-780e33055a9e'
                  ) et on et.encounter_type_id=e.encounter_type
-               join patient p on p.patient_id=e.patient_id and p.voided=0
-               left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+               join openmrs.patient p on p.patient_id=e.patient_id and p.voided=0
+               left outer join openmrs.obs o on o.encounter_id=e.encounter_id and o.voided=0
                                           and o.concept_id in (164929,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
         where e.voided=0
         group by e.patient_id, e.encounter_id;
@@ -200,8 +200,8 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
         update kp_etl.etl_contact c
         join (select pi.patient_id,
                      max(if(pit.uuid='b7bfefd0-239b-11e9-ab14-d663bd873d93',pi.identifier,null)) unique_identifier
-              from patient_identifier pi
-                     join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
+              from openmrs.patient_identifier pi
+                     join openmrs.patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
               where voided=0
               group by pi.patient_id) pid on pid.patient_id=c.client_id
         set
@@ -402,6 +402,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                     eligible_vl,
                     vl_test_done,
                     vl_results,
+                    received_vl_results,
                     condom_use_education,
                     post_abortal_care,
                     linked_to_psychosocial,
@@ -409,7 +410,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                     female_condoms_no,
                     lubes_no,
                     syringes_needles_no,
-                    pep,
+                    pep_eligible,
                     exposure_type,
                     other_exposure_type,
                     clinical_notes,
@@ -425,24 +426,24 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                        e.encounter_id as encounter_id,
                        e.creator,
                        e.date_created as date_created,
-                       max(if(o.concept_id=161558,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as sti_screened,
+                       max(if(o.concept_id=161558,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "" end),null)) as sti_screened,
                        max(if(o.concept_id=165199,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" else "" end),null)) as sti_results,
                        max(if(o.concept_id=165200,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as sti_treated,
                        max(if(o.concept_id=165249,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as sti_referred,
                        max(if(o.concept_id=165250,o.value_text,null)) as sti_referred_text,
-                       max(if(o.concept_id=165197,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as tb_screened,
+                       max(if(o.concept_id=165197,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "" end),null)) as tb_screened,
                        max(if(o.concept_id=165198,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" else "" end),null)) as tb_results,
-                       max(if(o.concept_id=1111,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as tb_treated,
+                       max(if(o.concept_id=1111,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "NA" end),null)) as tb_treated,
                        max(if(o.concept_id=162310,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as tb_referred,
                        max(if(o.concept_id=163323,o.value_text,null)) as tb_referred_text,
-                       max(if(o.concept_id=165040,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as hepatitisB_screened,
-                       max(if(o.concept_id=1322,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" else "" end),null)) as hepatitisB_results,
-                       max(if(o.concept_id=165251,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as hepatitisB_treated,
+                       max(if(o.concept_id=165040,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "" end),null)) as hepatitisB_screened,
+                       max(if(o.concept_id=1322,(case o.value_coded when 664 then "N" when 703 THEN "P" else "" end),null)) as hepatitisB_results,
+                       max(if(o.concept_id=165251,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "NA" end),null)) as hepatitisB_treated,
                        max(if(o.concept_id=165252,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as hepatitisB_referred,
                        max(if(o.concept_id=165253,o.value_text,null)) as hepatitisB_text,
-                       max(if(o.concept_id=165041,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as hepatitisC_screened,
-                       max(if(o.concept_id=161471,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" else "" end),null)) as hepatitisC_results,
-                       max(if(o.concept_id=165254,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as hepatitisC_treated,
+                       max(if(o.concept_id=165041,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "" end),null)) as hepatitisC_screened,
+                       max(if(o.concept_id=161471,(case o.value_coded when 664 then "N" when 703 THEN "P" else "" end),null)) as hepatitisC_results,
+                       max(if(o.concept_id=165254,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "NA" end),null)) as hepatitisC_treated,
                        max(if(o.concept_id=165255,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as hepatitisC_referred,
                        max(if(o.concept_id=165256,o.value_text,null)) as hepatitisC_text,
                        max(if(o.concept_id=165042,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as overdose_screened,
@@ -456,7 +457,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                        max(if(o.concept_id=165260,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as abscess_treated,
                        max(if(o.concept_id=165261,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as abscess_referred,
                        max(if(o.concept_id=165262,o.value_text,null)) as abscess_text,
-                       max(if(o.concept_id=165043,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as alcohol_screened,
+                       max(if(o.concept_id=165043,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "" end),null)) as alcohol_screened,
                        max(if(o.concept_id=165047,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" else "" end),null)) as alcohol_results,
                        max(if(o.concept_id=165263,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as alcohol_treated,
                        max(if(o.concept_id=165264,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as alcohol_referred,
@@ -468,7 +469,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                        max(if(o.concept_id=165268,o.value_text,null)) as cerv_cancer_text,
                        max(if(o.concept_id=165076,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as prep_screened,
                        max(if(o.concept_id=165202,(case o.value_coded when 165087 then "Eligible" when 165078 THEN "Not eligible" else "" end),null)) as prep_results,
-                       max(if(o.concept_id=165203,(case o.value_coded when 1065 then "Initiated" when 1066 THEN "Not Initiated" else "" end),null)) as prep_treated,
+                       max(if(o.concept_id=165203,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "" end),null)) as prep_treated,
                        max(if(o.concept_id=165270,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as prep_referred,
                        max(if(o.concept_id=165271,o.value_text,null)) as prep_text,
                        max(if(o.concept_id=165204,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as violence_screened,
@@ -478,12 +479,12 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                        max(if(o.concept_id=165274,o.value_text,null)) as violence_text,
                        max(if(o.concept_id=165045,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as risk_red_counselling_screened,
                        max(if(o.concept_id=165050,(case o.value_coded when 165087 then "Eligible" when 165078 THEN "Not eligible" else "" end),null)) as risk_red_counselling_eligibility,
-                       max(if(o.concept_id=165053,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as risk_red_counselling_support,
-                       max(if(o.concept_id=161595,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as risk_red_counselling_ebi_provided,
+                       max(if(o.concept_id=165053,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "" end),null)) as risk_red_counselling_support,
+                       max(if(o.concept_id=161595,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "" end),null)) as risk_red_counselling_ebi_provided,
                        max(if(o.concept_id=165277,o.value_text,null)) as risk_red_counselling_text,
                        max(if(o.concept_id=1382,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as fp_screened,
                        max(if(o.concept_id=165209,(case o.value_coded when 165087 then "Eligible" when 165078 THEN "Not eligible" else "" end),null)) as fp_eligibility,
-                       max(if(o.concept_id=160653,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as fp_treated,
+                       max(if(o.concept_id=160653,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "" end),null)) as fp_treated,
                        max(if(o.concept_id=165279,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as fp_referred,
                        max(if(o.concept_id=165280,o.value_text,null)) as fp_text,
                        max(if(o.concept_id=165210,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as mental_health_screened,
@@ -504,7 +505,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                        max(if(o.concept_id=165221,(case o.value_coded when 165222 then "Self use" when 165223 THEN "Distribution" else "" end),null)) as self_test_kits_given,
                        max(if(o.concept_id=165222,o.value_text,null)) as self_use_kits,
                        max(if(o.concept_id=165223,o.value_text,null)) as distribution_kits,
-                       max(if(o.concept_id=164952,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as self_tested,
+                       max(if(o.concept_id=164952,(case o.value_coded when 1065 THEN "Y" when 1066 then "N" else "" end),null)) as self_tested,
                        max(if(o.concept_id=164400,o.value_datetime,null)) as self_test_date,
                        max(if(o.concept_id=165231,(case o.value_coded when 162080 THEN "Initial" when 162081 then "Repeat" else "" end),null)) as self_test_frequency,
                        max(if(o.concept_id=165233,(case o.value_coded when 664 THEN "Negative" when 703 then "Positive" when 165232 then "Inconclusive" else "" end),null)) as self_test_results,
@@ -519,7 +520,8 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                        max(if(o.concept_id=160119,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1175 then "Not Applicable" else "" end),null)) as active_art,
                        max(if(o.concept_id=165242,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1175 then "Not Applicable" else "" end),null)) as eligible_vl,
                        max(if(o.concept_id=165243,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1175 then "Not Applicable" else "" end),null)) as vl_test_done,
-                       max(if(o.concept_id=165246,(case o.value_coded when 165244 THEN "Suppressed" when 165245 then "Not suppressed" when 164369 then "Results not yet received" when 1175 then "Not Applicable" else "" end),null)) as vl_results,
+                       max(if(o.concept_id=165246,(case o.value_coded when 165244 THEN "Y" when 165245 then "N" when 1175 then "NA" else "" end),null)) as vl_results,
+                       max(if(o.concept_id=165246,(case o.value_coded when 164369 then "N"  else "Y" end),null)) as received_vl_results,
                        max(if(o.concept_id=165247,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as condom_use_education,
                        max(if(o.concept_id=164820,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as post_abortal_care,
                        max(if(o.concept_id=165302,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as linked_to_psychosocial,
@@ -527,8 +529,8 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                        max(if(o.concept_id=165056,o.value_numeric,null)) as female_condoms_no,
                        max(if(o.concept_id=165057,o.value_numeric,null)) as lubes_no,
                        max(if(o.concept_id=165058,o.value_numeric,null)) as syringes_needles_no,
-                       max(if(o.concept_id=164845,(case o.value_coded when 127910 THEN "Rape" when 165045 then "Condom burst" when 5622 then "Others" else "" end),null)) as pep,
-                       max(if(o.concept_id=165060,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as exposure_type,
+                       max(if(o.concept_id=164845,(case o.value_coded when 1065 THEN "Y" when 1066 then "N" else "NA" end),null)) as pep_eligible,
+                       max(if(o.concept_id=165060,(case o.value_coded when 127910 THEN "Rape" when 165045 then "Condom burst" when 5622 then "Others" else "" end),null)) as exposure_type,
                        max(if(o.concept_id=163042,o.value_text,null)) as other_exposure_type,
                        max(if(o.concept_id=165248,o.value_text,null)) as clinical_notes,
                        max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
@@ -595,15 +597,9 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                            e.creator,
                            e.date_created as date_created,
                            max(if(o.concept_id=164082,(case o.value_coded when 1068 THEN "Symptomatic" when 5006 then "Asymptomatic" when 163139 then "Quartely Screening" when 160523 then "Follow up" else "" end),null)) as visit_reason,
-                          max(if(o.concept_id=165098,(case o.value_coded when 145762 THEN "Genital Ulcer Disease" when 130644 then "Pelvic Inflammation Disease" when 120939 then "Candidiasis" when 123529 then "Urethral Discharge/Urethritis"
-                                                                         when 139505 then "Genital Warts" when 116995 then "Cervicitis" when 112493 then "Syphilis" when 117829 then "Herpes Genitalia" when 130309 then "Pharyngeal Discharge"
-                                                                         when 121809 then "Vaginitis" when 155080 then "Anal Warts" when 148895 then "Anal Discharge" when 148902 then "Anal Rectal Ulcer" when 110172 then "Pharyngeal Ulcer" when 114732 then "Orchitis"
-                                                                         when 5622 then "Other(Specify)" else "" end),null)) as syndrome,
+                           max(if(o.concept_id=1169,(case o.value_coded when 1065 then "Positive" when 1066 then "Negative" else "" end),null)) as syndrome,
                            max(if(o.concept_id=165138,o.value_text,null)) as other_syndrome,
-                           max(if(o.concept_id=1282,(case o.value_coded when 75842 THEN "Erythromycin" when 73041 then "Ceftriaxone" when 82228 then "Podophyllin" when 73449 then "Ciprofloxacin"
-                                                                        when 70245 THEN "Acyclovir Tablets" when 70166 then "Paracetamol" when 72039 then "Benzathine" when 84221 then "Spectinomycin"
-                                                                        when 77897 THEN "Brufen" when 73006 then "Cefixime" when 100 then "Inj. Gentamycin" when 71160 then "Amoxycillin"
-                                                                        when 75222 THEN "Doxycycline" when 73624 then "Clotrimazole Pessaries"
+                           max(if(o.concept_id=165200,(case o.value_coded when 1065 then "Yes" when 1066 then "No"
                                                                         else "" end),null)) as drug_prescription,
                            max(if(o.concept_id=163101,o.value_text,null)) as other_drug_prescription,
                            max(if(o.concept_id=163743,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as genital_exam_done,
@@ -626,7 +622,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                              select encounter_type_id, uuid, name from encounter_type where uuid in('2cc8c535-bbfa-4668-98c7-b12e3550ee7b')
                              ) et on et.encounter_type_id=e.encounter_type
                            left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                                      and o.concept_id in (164082,165098,165138,1282,163101,163743,1272,163042,1788,162724,165128,165127,163169,
+                                                      and o.concept_id in (164082,1169,165138,165200,163101,163743,1272,163042,1788,162724,165128,165127,163169,
                             159777,165055,162749,1473,5096)
                     where e.voided=0
                     group by e.patient_id, e.encounter_id, visit_date;
@@ -639,7 +635,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                 CREATE PROCEDURE sp_populate_etl_peer_calendar()
                   BEGIN
                     SELECT "Processing Peer calendar ", CONCAT("Time: ", NOW());
-                    INSERT INTO kp_etl.etl_peer_calendar(
+                    INSERT INTO  kp_etl.etl_peer_calendar(
                         uuid,
                         client_id,
                         visit_id,
@@ -651,49 +647,25 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                         hotspot_name,
                         typology,
                         other_hotspots,
-                        weekly_condoms_required,
+                        weekly_sex_acts,
                         monthly_condoms_required,
-                        weekly_lubes_required,
+                        weekly_anal_sex_acts,
                         monthly_lubes_required,
-                        daily_syringes_required,
+                        daily_injections,
                         monthly_syringes_required,
                         years_in_sexwork_drugs,
                         experienced_violence,
-                        visited_clinic,
-                        week1_n_and_s,
-                        week1_male_condoms,
-                        week1_lubes,
-                        week1_female_condoms,
-                        week1_self_test_kits_distributed,
-                        week1_received_clinical_service,
-                        week1_violence_reported,
-                        week1_remarks,
-                        week2_n_and_s,
-                        week2_male_condoms,
-                        week2_lubes,
-                        week2_female_condoms,
-                        week2_self_test_kits_distributed,
-                        week2_received_clinical_service,
-                        week2_violence_reported,
-                        week2_remarks,
-                        week3_n_and_s,
-                        week3_male_condoms,
-                        week3_lubes,
-                        week3_female_condoms,
-                        week3_self_test_kits_distributed,
-                        week3_received_clinical_service,
-                        week3_violence_reported,
-                        week3_remarks,
-                        week4_n_and_s,
-                        week4_male_condoms,
-                        week4_lubes,
-                        week4_female_condoms,
-                        week4_self_test_kits_distributed,
-                        week4_received_clinical_service,
-                        week4_violence_reported,
-                        week4_remarks,
+                        service_provided_within_last_month,
+                        monthly_n_and_s_distributed,
+                        monthly_male_condoms_distributed,
+                        monthly_lubes_distributed,
+                        monthly_female_condoms_distributed,
+                        monthly_self_test_kits_distributed,
+                        received_clinical_service,
+                        violence_reported,
                         referred,
                         health_edu,
+                        remarks,
                         voided
                         )
                     select
@@ -713,49 +685,25 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                                                                           when  165023 then "Guest house/Hotels/Lodgings" when 165024 then "Massage parlor" when 165025 then "Chang’aa den" when 165026 then "Barbershop/Salon"
                                                                           when  165297 then "Virtual Space" when  5622 then "Other (Specify)" else "" end),null)) as typology,
                            max(if(o.concept_id=165298,o.value_text,null)) as other_hotspots,
-                           max(if(o.concept_id=165007,o.value_numeric,null)) as weekly_condoms_required,
+                           max(if(o.concept_id=165007,o.value_numeric,null)) as weekly_sex_acts,
                            max(if(o.concept_id=165299,o.value_numeric,null)) as monthly_condoms_required,
-                           max(if(o.concept_id=165008,o.value_numeric,null)) as weekly_lubes_required,
+                           max(if(o.concept_id=165008,o.value_numeric,null)) as weekly_anal_sex_acts,
                            max(if(o.concept_id=165300,o.value_numeric,null)) as monthly_lubes_required,
-                           max(if(o.concept_id=165009,o.value_numeric,null)) as daily_syringes_required,
+                           max(if(o.concept_id=165009,o.value_numeric,null)) as daily_injections,
                            max(if(o.concept_id=165308,o.value_numeric,null)) as monthly_syringes_required,
                            max(if(o.concept_id=165301,o.value_numeric,null)) as years_in_sexwork_drugs,
                            max(if(o.concept_id=123160,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as experienced_violence,
-                           max(if(o.concept_id=165302,(case o.value_coded when 161643 THEN "Yes" else "" end),null)) as visited_clinic,
-                           max(if(o.concept_id=165309,o.value_text,null)) as week1_n_and_s,
-                           max(if(o.concept_id=165310,o.value_text,null)) as week1_male_condoms,
-                           max(if(o.concept_id=165311,o.value_text,null)) as week1_self_test_kits_distributed,
-                           max(if(o.concept_id=165312,o.value_text,null)) as week1_violence_reported,
-                           max(if(o.concept_id=165313,o.value_text,null)) as week1_lubes,
-                           max(if(o.concept_id=165314,o.value_text,null)) as week1_female_condoms,
-                           max(if(o.concept_id=165315,o.value_text,null)) as week1_received_clinical_service,
-                           max(if(o.concept_id=165316,o.value_text,null)) as week1_remarks,
-                           max(if(o.concept_id=165317,o.value_text,null)) as week2_n_and_s,
-                           max(if(o.concept_id=165318,o.value_text,null)) as week2_male_condoms,
-                           max(if(o.concept_id=165319,o.value_text,null)) as week2_self_test_kits_distributed,
-                           max(if(o.concept_id=165320,o.value_text,null)) as week2_violence_reported,
-                           max(if(o.concept_id=165321,o.value_text,null)) as week2_lubes,
-                           max(if(o.concept_id=165322,o.value_text,null)) as week2_female_condoms,
-                           max(if(o.concept_id=165323,o.value_text,null)) as week2_received_clinical_service,
-                           max(if(o.concept_id=165324,o.value_text,null)) as week2_remarks,
-                           max(if(o.concept_id=165325,o.value_text,null)) as week3_n_and_s,
-                           max(if(o.concept_id=165326,o.value_text,null)) as week3_male_condoms,
-                           max(if(o.concept_id=165327,o.value_text,null)) as week3_self_test_kits_distributed,
-                           max(if(o.concept_id=165328,o.value_text,null)) as week3_violence_reported,
-                           max(if(o.concept_id=165329,o.value_text,null)) as week3_lubes,
-                           max(if(o.concept_id=165330,o.value_text,null)) as week3_female_condoms,
-                           max(if(o.concept_id=165331,o.value_text,null)) as week3_received_clinical_service,
-                           max(if(o.concept_id=165332,o.value_text,null)) as week3_remarks,
-                           max(if(o.concept_id=165333,o.value_text,null)) as week4_n_and_s,
-                           max(if(o.concept_id=165334,o.value_text,null)) as week4_male_condoms,
-                           max(if(o.concept_id=165335,o.value_text,null)) as week4_self_test_kits_distributed,
-                           max(if(o.concept_id=165336,o.value_text,null)) as week4_violence_reported,
-                           max(if(o.concept_id=165337,o.value_text,null)) as week4_lubes,
-                           max(if(o.concept_id=165338,o.value_text,null)) as week4_female_condoms,
-                           max(if(o.concept_id=165339,o.value_text,null)) as week4_received_clinical_service,
-                           max(if(o.concept_id=165340,o.value_text,null)) as week4_remarks,
-                           max(if(o.concept_id=1272,o.value_text,null)) as referred,
-                           max(if(o.concept_id=165147,o.value_text,null)) as health_edu,
+                           max(if(o.concept_id=165302,(case o.value_coded when 159777 then "Condoms" when 165303 then "Needles and Syringes" when 165004 then "Contact" when 161643 THEN "Visited Clinic" else "" end),null)) as service_provided_within_last_month,
+                           max(if(o.concept_id=165341,o.value_numeric,null)) as monthly_n_and_s_distributed,
+                           max(if(o.concept_id=165343,o.value_numeric,null)) as monthly_male_condoms_distributed,
+                           max(if(o.concept_id=165057,o.value_numeric,null)) as monthly_lubes_distributed,
+                           max(if(o.concept_id=165344,o.value_numeric,null)) as monthly_female_condoms_distributed,
+                           max(if(o.concept_id=165345,o.value_numeric,null)) as monthly_self_test_kits_distributed,
+                           max(if(o.concept_id=1774,o.value_numeric,null)) as received_clinical_service,
+                           max(if(o.concept_id=165272,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as violence_reported,
+                           max(if(o.concept_id=1749,o.value_numeric,null)) as referred,
+                           max(if(o.concept_id=165346,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as health_edu,
+                           max(if(o.concept_id=160632,o.value_text,null)) as remarks,
                            e.voided as voided
                     from encounter e
                            inner join
@@ -763,13 +711,138 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                              select encounter_type_id, uuid, name from encounter_type where uuid in('c4f9db39-2c18-49a6-bf9b-b243d673c64d')
                              ) et on et.encounter_type_id=e.encounter_type
                            left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                                      and o.concept_id in (165006,165005,165298,165007,165299,165008,165300,165009,165301,123160,165308,165309,165310,165311,165312,165313,
-                            165315,165316,165317,165318,165321,165319,165320,165322,165323,165324,165325,165326,165327,165328,165329,165330,165331,165332,165333,165334,165335,165336,165337,
-                            165147,1272,165338,165339,165340)
+                                                      and o.concept_id in (165006,165005,165298,165007,165299,165008,165301,165302,165341,165343,165057,165344,165345,
+                                                      1774,123160,1749,165346,160632,165272)
                                           where e.voided=0
                     group by e.patient_id, e.encounter_id, visit_date;
                     SELECT "Completed processing Peer calendar data ", CONCAT("Time: ", NOW());
                     END$$
+
+-- ------------------------------------ populate hts test table ----------------------------------------
+
+
+DROP PROCEDURE IF EXISTS sp_populate_hts_test$$
+CREATE PROCEDURE sp_populate_hts_test()
+BEGIN
+SELECT "Processing hts tests";
+INSERT INTO kp_etl.etl_hts_test (
+client_id,
+visit_id,
+encounter_id,
+encounter_uuid,
+encounter_location,
+creator,
+date_created,
+visit_date,
+test_type,
+population_type,
+key_population_type,
+ever_tested_for_hiv,
+months_since_last_test,
+patient_disabled,
+disability_type,
+patient_consented,
+client_tested_as,
+test_strategy,
+hts_entry_point,
+test_1_kit_name,
+test_1_kit_lot_no,
+test_1_kit_expiry,
+test_1_result,
+test_2_kit_name,
+test_2_kit_lot_no,
+test_2_kit_expiry,
+test_2_result,
+final_test_result,
+patient_given_result,
+couple_discordant,
+tb_screening,
+patient_had_hiv_self_test ,
+remarks,
+voided
+)
+select
+e.patient_id,
+e.visit_id,
+e.encounter_id,
+e.uuid,
+e.location_id,
+e.creator,
+e.date_created,
+e.encounter_datetime as visit_date,
+max(if((o.concept_id=162084 and o.value_coded=162082 and f.uuid = "402dc5d7-46da-42d4-b2be-f43ea4ad87b0") or (f.uuid = "b08471f6-0892-4bf7-ab2b-bf79797b8ea4"), 2, 1)) as test_type , -- 2 for confirmation, 1 for initial
+max(if(o.concept_id=164930,(case o.value_coded when 164928 then "General Population" when 164929 then "Key Population" else "" end),null)) as population_type,
+max(if(o.concept_id=160581,(case o.value_coded when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex worker" else "" end),null)) as key_population_type,
+max(if(o.concept_id=164401,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as ever_tested_for_hiv,
+max(if(o.concept_id=159813,o.value_numeric,null)) as months_since_last_test,
+max(if(o.concept_id=164951,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_disabled,
+max(if(o.concept_id=162558,(case o.value_coded when 120291 then "Deaf" when 147215 then "Blind" when 151342 then "Mentally Challenged" when 164538 then "Physically Challenged" when 5622 then "Other" else "" end),null)) as disability_type,
+max(if(o.concept_id=1710,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end),null)) as patient_consented,
+max(if(o.concept_id=164959,(case o.value_coded when 164957 then "Individual" when 164958 then "Couple" else "" end),null)) as client_tested_as,
+max(if(o.concept_id=164956,(
+  case o.value_coded
+  when 164163 then "Provider Initiated Testing(PITC)"
+  when 164953 then "Non Provider Initiated Testing"
+  when 164954 then "Integrated VCT Center"
+  when 164955 then "Stand Alone VCT Center"
+  when 159938 then "Home Based Testing"
+  when 159939 then "Mobile Outreach HTS"
+  when 5622 then "Other"
+  else ""
+  end ),null)) as test_strategy,
+   max(if(o.concept_id=160540,(
+             case o.value_coded
+             when 5485 then "In Patient Department(IPD)"
+             when 160542 then "Out Patient Department(OPD)"
+             when 162181 then "Peadiatric Clinic"
+             when 160552 then "Nutrition Clinic"
+             when 160538 then "PMTCT"
+             when 160541 then "TB"
+             when 162050 then "CCC"
+             when 159940 then "VCT"
+             when 159938 then "Home Based Testing"
+             when 159939 then "Mobile Outreach"
+             when 5622 then "Other"
+             else ""
+             end ),null)) as hts_entry_point,
+max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
+max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
+max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
+max(if(t.test_1_result is not null, t.test_1_result, null)) as test_1_result,
+max(if(t.test_2_result is not null, t.kit_name, null)) as test_2_kit_name,
+max(if(t.test_2_result is not null, t.lot_no, null)) as test_2_kit_lot_no,
+max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
+max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
+max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
+max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
+max(if(o.concept_id=6096,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as couple_discordant,
+max(if(o.concept_id=1659,(case o.value_coded when 1660 then "No TB signs" when 142177 then "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "Not done" when 1111 then "On TB Treatment"  else "" end),null)) as tb_screening,
+max(if(o.concept_id=164952,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_had_hiv_self_test,
+max(if(o.concept_id=163042,trim(o.value_text),null)) as remarks,
+e.voided
+from openmrs.encounter e
+inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
+inner join openmrs.obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558, 1710, 164959, 164956,
+                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813)
+inner join (
+             select
+               o.person_id,
+               o.encounter_id,
+               o.obs_group_id,
+               max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
+               max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
+               max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" else "" end),null)) as kit_name ,
+               max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
+               max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
+             from openmrs.obs o
+             inner join openmrs.encounter e on e.encounter_id = o.encounter_id
+             inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
+             where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
+             group by e.encounter_id, o.obs_group_id
+           ) t on e.encounter_id = t.encounter_id
+group by e.encounter_id;
+SELECT "Completed processing hts tests";
+END$$
 
 SET sql_mode=@OLD_SQL_MODE$$
 -- ------------------------------------------- running all procedures -----------------------------
@@ -788,6 +861,7 @@ CALL sp_populate_etl_client_enrollment();
 CALL sp_populate_etl_clinical_visit();
 CALL sp_populate_etl_sti_Treatment();
 CALL sp_populate_etl_peer_calendar();
+CALL sp_populate_hts_test();
 
 UPDATE kp_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
