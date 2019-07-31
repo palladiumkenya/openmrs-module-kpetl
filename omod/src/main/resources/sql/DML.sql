@@ -307,6 +307,10 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                     encounter_id,
                     encounter_provider,
                     date_created,
+                    implementing_partner,
+                    type_of_visit,
+                    visit_reason,
+                    service_delivery_model,
                     sti_screened,
                     sti_results,
                     sti_treated,
@@ -426,6 +430,10 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                        e.encounter_id as encounter_id,
                        e.creator,
                        e.date_created as date_created,
+                       max(if(o.concept_id=165347,o.value_text,null)) as implementing_partner,
+                       max(if(o.concept_id=164181,(case o.value_coded when 162080 then "Initial" when 164142 THEN "Revisit" else "" end),null)) as type_of_visit,
+                       max(if(o.concept_id=164082,(case o.value_coded when 5006 then "Asymptomatic" when 1068 THEN "Symptomatic" when 165348 then "Quarterly Screening checkup" when 160523 then "Follow up"  else "" end),null)) as visit_reason,
+                       max(if(o.concept_id=160540,(case o.value_coded when 161235 then "Static" when 160545 THEN "Outreach" else "" end),null)) as service_delivery_model,
                        max(if(o.concept_id=161558,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "" end),null)) as sti_screened,
                        max(if(o.concept_id=165199,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" else "" end),null)) as sti_results,
                        max(if(o.concept_id=165200,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as sti_treated,
@@ -541,7 +549,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                          select encounter_type_id, uuid, name from encounter_type where uuid in('92e03f22-9686-11e9-bc42-526af7764f64')
                          ) et on et.encounter_type_id=e.encounter_type
                        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                                  and o.concept_id in (161558,165199,165200,165249,165250,165197,165198,1111,162310,163323,165040,1322,165251,165252,165253,
+                                                  and o.concept_id in (165347,164181,164082,160540,161558,165199,165200,165249,165250,165197,165198,1111,162310,163323,165040,1322,165251,165252,165253,
                         165041,161471,165254,165255,165256,165042,165046,165257,165201,165258,165259,165044,165051,165260,165261,165262,165043,165047,165263,165264,165265,
                         164934,165196,165266,165267,165268,165076,165202,165203,165270,165271,165204,165205,165208,165273,165274,165045,165050,165053,161595,165277,1382,
                         165209,160653,165279,165280,165210,165211,165213,165281,165282,165214,165215,159382,164401,165218,164848,159427,1648,163042,165220,165221,165222,165223,
@@ -699,7 +707,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                            max(if(o.concept_id=165057,o.value_numeric,null)) as monthly_lubes_distributed,
                            max(if(o.concept_id=165344,o.value_numeric,null)) as monthly_female_condoms_distributed,
                            max(if(o.concept_id=165345,o.value_numeric,null)) as monthly_self_test_kits_distributed,
-                           max(if(o.concept_id=1774,o.value_numeric,null)) as received_clinical_service,
+                           max(if(o.concept_id=1774,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as received_clinical_service,
                            max(if(o.concept_id=165272,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as violence_reported,
                            max(if(o.concept_id=1749,o.value_numeric,null)) as referred,
                            max(if(o.concept_id=165346,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as health_edu,
@@ -866,7 +874,7 @@ CALL sp_populate_hts_test();
 UPDATE kp_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
 SELECT "Completed first time setup", CONCAT("Time: ", NOW());
-  
+
 END$$
 
 
