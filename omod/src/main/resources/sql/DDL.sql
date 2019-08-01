@@ -28,7 +28,7 @@ CREATE PROCEDURE create_etl_tables()
     DROP TABLE IF EXISTS kp_etl.etl_client_enrollment;
     DROP TABLE IF EXISTS kp_etl.etl_clinical_visit;
     DROP TABLE IF EXISTS kp_etl.etl_peer_calendar;
-    DROP TABLE IF EXISTS kp_etl.etl_sti_Treatment;
+    DROP TABLE IF EXISTS kp_etl.etl_sti_treatment;
 
     -- create table etl_client_registration
     create table kp_etl.etl_client_registration (
@@ -308,8 +308,8 @@ CREATE PROCEDURE create_etl_tables()
 
     SELECT "Successfully created etl_peer_calendar table";
 
-        -- ------------ create table etl_sti_Treatment-----------------------
-    CREATE TABLE kp_etl.etl_sti_Treatment (
+        -- ------------ create table etl_sti_treatment-----------------------
+    CREATE TABLE kp_etl.etl_sti_treatment (
       uuid CHAR(38),
       encounter_id INT(11) NOT NULL PRIMARY KEY,
       client_id INT(11) NOT NULL ,
