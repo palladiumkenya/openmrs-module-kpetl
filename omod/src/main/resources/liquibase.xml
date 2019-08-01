@@ -53,7 +53,7 @@
             Sets up data tool tables
         </comment>
         <sql>
-            CALL create_datatools_tables();
+            <!--CALL create_datatools_tables();-->
         </sql>
     </changeSet>
     <!--Adding scheduled task to periodically refresh ETL tables-->

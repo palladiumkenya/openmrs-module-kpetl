@@ -560,13 +560,13 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                 SELECT "Completed processing Clinical visit data ", CONCAT("Time: ", NOW());
                 END$$
 
-            -- ------------- populate etl_sti_Treatment--------------------------------
+            -- ------------- populate etl_sti_treatment--------------------------------
 
-                DROP PROCEDURE IF EXISTS sp_populate_etl_sti_Treatment$$
-                CREATE PROCEDURE sp_populate_etl_sti_Treatment()
+                DROP PROCEDURE IF EXISTS sp_populate_etl_sti_treatment$$
+                CREATE PROCEDURE sp_populate_etl_sti_treatment()
                   BEGIN
                     SELECT "Processing STI Treatment ", CONCAT("Time: ", NOW());
-                    INSERT INTO kp_etl.etl_sti_Treatment(
+                    INSERT INTO kp_etl.etl_sti_treatment(
                         uuid,
                         client_id,
                         visit_id,
@@ -860,14 +860,14 @@ CREATE PROCEDURE sp_first_time_setup()
   BEGIN
 DECLARE populate_script_id INT(11);
 SELECT "Beginning first time setup", CONCAT("Time: ", NOW());
-INSERT INTO kP_etl.etl_script_status(script_name, start_time) VALUES('initial_population_of_tables', NOW());
+INSERT INTO kp_etl.etl_script_status(script_name, start_time) VALUES('initial_population_of_tables', NOW());
 SET populate_script_id = LAST_INSERT_ID();
 
 CALL sp_populate_etl_client_registration();
 CALL sp_populate_etl_contact();
 CALL sp_populate_etl_client_enrollment();
 CALL sp_populate_etl_clinical_visit();
-CALL sp_populate_etl_sti_Treatment();
+CALL sp_populate_etl_sti_treatment();
 CALL sp_populate_etl_peer_calendar();
 CALL sp_populate_hts_test();
 
