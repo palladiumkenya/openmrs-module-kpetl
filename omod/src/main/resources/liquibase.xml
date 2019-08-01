@@ -47,15 +47,6 @@
             CALL sp_first_time_setup();
         </sql>
     </changeSet>
-
-    <changeSet id="${project.parent.artifactId}-20171106-1742" author="aojwang">
-        <comment>
-            Sets up ETL dashboard tables
-        </comment>
-        <sql>
-            CALL sp_update_dashboard_table();
-        </sql>
-    </changeSet>
 <!-- consider removing this changeset if not necessary. data tool could be setup separately-->
     <changeSet id="${project.parent.artifactId}-20171106-1743" author="aojwang">
         <comment>
