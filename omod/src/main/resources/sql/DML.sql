@@ -506,7 +506,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                        max(if(o.concept_id=164401,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1175 then "Not Applicable" else "" end),null)) as hiv_tested,
                        max(if(o.concept_id=165218,(case o.value_coded when 162080 THEN "Initial" when 162081 then "Repeat" when 1175 then "Not Applicable" else "" end),null)) as test_frequency,
                        max(if(o.concept_id=164848,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1067 then "Not Applicable" else "" end),null)) as received_results,
-                       max(if(o.concept_id=159427,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" when 1118 then "Not done" else "" end),null)) as test_results,
+                       max(if(o.concept_id=159427,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" when 165232 then "Inconclusive" when 138571 then "Known Positive" when 1118 then "Not done" else "" end),null)) as test_results,
                        max(if(o.concept_id=1648,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end),null)) as linked_to_art,
                        max(if(o.concept_id=163042,o.value_text,null)) as facility_linked_to,
                        max(if(o.concept_id=165220,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as self_test_education,
@@ -809,8 +809,9 @@ max(if(o.concept_id=164956,(
              when 162050 then "CCC"
              when 159940 then "VCT"
              when 159938 then "Home Based Testing"
-             when 159939 then "Mobile Outreach"
+             when 159939 then "Community Outreach"
              when 5622 then "Other"
+             when 165350 then "Dice"
              else ""
              end ),null)) as hts_entry_point,
 max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
