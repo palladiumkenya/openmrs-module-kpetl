@@ -4,7 +4,7 @@ BEGIN
 DECLARE script_id INT(11);
 
 -- Log start time
-INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('KenyaEMR_Data_Tool', NOW());
+INSERT INTO kp_etl.etl_script_status(script_name, start_time) VALUES('KenyaEMR_Data_Tool', NOW());
 SET script_id = LAST_INSERT_ID();
 
 drop database if exists kenyaemr_datatools;
@@ -1032,7 +1032,7 @@ alter table kenyaemr_datatools.ipt_screening add FOREIGN KEY(patient_id) REFEREN
 create table kenyaemr_datatools.ipt_followup as select * from kenyaemr_etl.etl_ipt_follow_up;
 alter table kenyaemr_datatools.ipt_followup add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
+UPDATE kp_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
 
