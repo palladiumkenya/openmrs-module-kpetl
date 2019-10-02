@@ -1095,7 +1095,7 @@ CALL sp_update_etl_sti_treatment(last_update_time);
 CALL sp_update_etl_peer_calendar(last_update_time);
 CALL sp_update_hts_test(last_update_time);
 
-UPDATE kP_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
+UPDATE kp_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
 DELETE FROM kp_etl.etl_script_status where script_name in ("KenyaEMR_Data_Tool", "scheduled_updates") and start_time < DATE_SUB(NOW(), INTERVAL 12 HOUR);
 SELECT update_script_id;
 
