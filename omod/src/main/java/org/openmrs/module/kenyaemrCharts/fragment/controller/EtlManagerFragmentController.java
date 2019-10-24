@@ -2,17 +2,15 @@ package org.openmrs.module.kenyaemrCharts.fragment.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.Query;
 import org.hibernate.Transaction;
 import org.hibernate.jdbc.Work;
 import org.json.JSONObject;
 import org.openmrs.Patient;
 import org.openmrs.api.context.Context;
+import org.openmrs.api.db.hibernate.DbSessionFactory;
 import org.openmrs.ui.framework.SimpleObject;
 import org.openmrs.ui.framework.UiUtils;
 import org.openmrs.ui.framework.fragment.FragmentModel;
-import org.openmrs.api.db.hibernate.DbSessionFactory;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -94,9 +92,8 @@ public class EtlManagerFragmentController {
             public void execute(Connection connection) throws SQLException {
                 try {
                     Statement stmt = connection.createStatement();
-                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kp_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools');");
+                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kp_etl') OR (In_use > 0 AND `Database` LIKE 'kp_datatools');");
                     ResultSetMetaData metaData = rs.getMetaData();
-
                     while (rs.next()) {
                         Object[] row = new Object[metaData.getColumnCount()];
                         for (int i = 1; i <= metaData.getColumnCount(); i++) {
@@ -118,7 +115,6 @@ public class EtlManagerFragmentController {
         });
         if(sampleTypeObject.isEmpty()) {
 
-
             final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kp_etl.etl_script_status order by start_time desc limit 10;";
             Transaction tx = null;
             try {
@@ -135,11 +131,9 @@ public class EtlManagerFragmentController {
                         cs.execute();
                         dataToolStatement.execute();
                         try {
-
                             ResultSet resultSet = statement.executeQuery();
                             if (resultSet != null) {
                                 ResultSetMetaData metaData = resultSet.getMetaData();
-
                                 while (resultSet.next()) {
                                     Object[] row = new Object[metaData.getColumnCount()];
                                     for (int i = 1; i <= metaData.getColumnCount(); i++) {
@@ -188,9 +182,8 @@ public class EtlManagerFragmentController {
             public void execute(Connection connection) throws SQLException {
                 try {
                     Statement stmt = connection.createStatement();
-                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kp_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools');");
+                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kp_etl');");
                     ResultSetMetaData metaData = rs.getMetaData();
-
 
                     while (rs.next()) {
                         Object[] row = new Object[metaData.getColumnCount()];

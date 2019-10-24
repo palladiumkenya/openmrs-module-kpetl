@@ -22,15 +22,15 @@ CREATE PROCEDURE create_etl_tables()
     -- Log start time
     INSERT INTO kp_etl.etl_script_status(script_name, start_time) VALUES('initial_creation_of_tables', NOW());
     SET script_id = LAST_INSERT_ID();
-
+    SET FOREIGN_KEY_CHECKS=0;
     DROP TABLE IF EXISTS kp_etl.etl_client_registration;
     DROP TABLE IF EXISTS kp_etl.etl_contact;
     DROP TABLE IF EXISTS kp_etl.etl_client_enrollment;
     DROP TABLE IF EXISTS kp_etl.etl_clinical_visit;
     DROP TABLE IF EXISTS kp_etl.etl_peer_calendar;
     DROP TABLE IF EXISTS kp_etl.etl_sti_treatment;
+    SET FOREIGN_KEY_CHECKS=1;
 
-    -- create table etl_client_registration
     create table kp_etl.etl_client_registration (
       client_id INT(11) not null primary key,
       registration_date DATE,
@@ -347,7 +347,6 @@ CREATE PROCEDURE create_etl_tables()
       INDEX(given_condoms)
     );
 
-
 -- -------------------------- CREATE hts_test table ---------------------------------
 
 create table kp_etl.etl_hts_test (
@@ -397,4 +396,7 @@ index(test_1_kit_name),
 index(test_2_kit_name)
 );
 
+
+update kp_etl.etl_script_status SET stop_time=NOW() where id=script_id
+;
 END$$

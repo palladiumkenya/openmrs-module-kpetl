@@ -95,7 +95,7 @@
     </changeSet>
     <changeSet id="${project.parent.artifactId}-20190222-1740" author="aojwang">
         <comment>
-            Adding jarowinkler script to kenyaemr_etl
+            Adding jarowinkler script to kp_etl
         </comment>
         <sqlFile path="sql/Query_DoubleMetaphone_KenyaEMR_003.sql" endDelimiter="\$\$" stripComments="true" />
     </changeSet>
