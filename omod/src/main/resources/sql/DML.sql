@@ -725,6 +725,181 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                     group by e.patient_id, e.encounter_id, visit_date;
                     SELECT "Completed processing Peer calendar data ", CONCAT("Time: ", NOW());
                     END$$
+            -- ------------- populate etl_referral--------------------------------
+
+                DROP PROCEDURE IF EXISTS sp_populate_etl_referral$$
+                CREATE PROCEDURE sp_populate_etl_referral()
+                  BEGIN
+                    SELECT "Processing referrals ", CONCAT("Time: ", NOW());
+                    INSERT INTO  kp_etl.etl_referral(
+                        uuid,
+						client_id,
+						visit_id,
+						visit_date,
+						location_id,
+						encounter_id,
+						encounter_provider,
+						date_created,
+						referral_order,
+						referral_date,
+						institution_referred,
+						service_referred_for,
+						contact_person,
+						referred_outcome,
+						remarks,
+						voided
+                        )
+                    select
+                           e.uuid,
+                           e.patient_id,
+                           e.visit_id,
+                           (e.encounter_datetime) as visit_date,
+                           e.location_id,
+                           e.encounter_id as encounter_id,
+                           e.creator,
+                           e.date_created as date_created,
+						   max(if(o.concept_id=1272,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as referral_order,
+						   max(if(o.concept_id=161561,o.value_datetime,null)) as referral_date,
+						   max(if(o.concept_id=162724,o.value_text,null)) as institution_referred,
+						   max(if(o.concept_id=160478,(case o.value_coded when 164849 THEN "Care and treatment" when 160546 then "STI treatment" when 5622 THEN "Other" else "" end),null)) as service_referred_for,
+						   max(if(o.concept_id=1473,o.value_text,null)) as contact_person,
+						    max(if(o.concept_id=165152,(case o.value_coded when 163766 THEN "Linked to care" when 162978 then "OB number provided" else "" end),null)) as referred_outcome,
+						   max(if(o.concept_id=160632,o.value_text,null)) as remarks,
+                           e.voided as voided
+						   from encounter e
+                           inner join
+                             (
+                             select encounter_type_id, uuid, name from encounter_type where uuid in('c4f9db39-2c18-49a6-bf9b-b243d673c64d')
+                             ) et on et.encounter_type_id=e.encounter_type
+                           left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                      and o.concept_id in (1272,161561,162724,160478,1473,165152,160632)
+                                          where e.voided=0
+                    group by e.patient_id, e.encounter_id, visit_date;
+                    SELECT "Completed processing Peer referral data ", CONCAT("Time: ", NOW());
+                    END$$
+
+
+                -- ------------- populate etl_depression_screening--------------------------------
+
+                    DROP PROCEDURE IF EXISTS sp_populate_etl_depression_screening$$
+                    CREATE PROCEDURE sp_populate_etl_depression_screening()
+                      BEGIN
+                        SELECT "Processing depression screening", CONCAT("Time: ", NOW());
+                        INSERT INTO  kp_etl.etl_depression_screening(
+                            uuid,
+                            client_id,
+                            visit_id,
+                            visit_date,
+                            location_id,
+                            encounter_id,
+                            encounter_provider,
+                            date_created,
+                            little_interest_doing_things,
+                            depressed,
+                            sleep_disorder,
+                            tiredness,
+                            eating_disorder,
+                            feeling_bad_about_your_self,
+                            trouble_concentrating,
+                            slow_or_restless,
+                            ph9_rating,
+                            voided
+                            )
+                        select
+                               e.uuid,
+                               e.patient_id,
+                               e.visit_id,
+                               (e.encounter_datetime) as visit_date,
+                               e.location_id,
+                               e.encounter_id as encounter_id,
+                               e.creator,
+                               e.date_created as date_created,
+                               max(if(o.concept_id=165110,(case o.value_coded when 163733 THEN "Not at al" when 163734 then "Several days" when 163735 then "More than half the day" when 163736 then "Nearly every day"  else "" end),null)) as little_interest_doing_things,
+                               max(if(o.concept_id=165110,(case o.value_coded when 163733 THEN "Not at al" when 163734 then "Several days" when 163735 then "More than half the day" when 163736 then "Nearly every day"  else "" end),null)) as depressed,
+                               max(if(o.concept_id=165110,(case o.value_coded when 163733 THEN "Not at al" when 163734 then "Several days" when 163735 then "More than half the day" when 163736 then "Nearly every day"  else "" end),null)) as sleep_disorder,
+                               max(if(o.concept_id=165110,(case o.value_coded when 163733 THEN "Not at al" when 163734 then "Several days" when 163735 then "More than half the day" when 163736 then "Nearly every day"  else "" end),null)) as tiredness,
+                               max(if(o.concept_id=165110,(case o.value_coded when 163733 THEN "Not at al" when 163734 then "Several days" when 163735 then "More than half the day" when 163736 then "Nearly every day"  else "" end),null)) as eating_disorder,
+                               max(if(o.concept_id=165110,(case o.value_coded when 163733 THEN "Not at al" when 163734 then "Several days" when 163735 then "More than half the day" when 163736 then "Nearly every day"  else "" end),null)) as feeling_bad_about_your_self,
+                               max(if(o.concept_id=165110,(case o.value_coded when 163733 THEN "Not at al" when 163734 then "Several days" when 163735 then "More than half the day" when 163736 then "Nearly every day"  else "" end),null)) as trouble_concentrating,
+                               max(if(o.concept_id=165110,(case o.value_coded when 163733 THEN "Not at al" when 163734 then "Several days" when 163735 then "More than half the day" when 163736 then "Nearly every day"  else "" end),null)) as slow_or_restless,
+                               max(if(o.concept_id=165110,(case o.value_coded when 1115 THEN "Depression unlikely" when 15779 then "Mild depression" when 134011 then "Moderate depression" when 134017 then "Moderate severe depression" when 126627 then "Severe depression" else "" end),null)) as ph9_rating,
+
+                               e.voided as voided
+                               from encounter e
+                               inner join
+                                 (
+                                 select encounter_type_id, uuid, name from encounter_type where uuid in('c4f9db39-2c18-49a6-bf9b-b243d673c64d')
+                                 ) et on et.encounter_type_id=e.encounter_type
+                               left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                          and o.concept_id in (165110)
+                                              where e.voided=0
+                        group by e.patient_id, e.encounter_id, visit_date;
+                        SELECT "Completed processing Peer depression screening data ", CONCAT("Time: ", NOW());
+                        END$$
+
+                    -- ------------- populate kp_etl.etl_peer_tracking--------------------------------
+
+                        DROP PROCEDURE IF EXISTS sp_populate_kp_etl.etl_peer_tracking$$
+                        CREATE PROCEDURE sp_populate_kp_etl.etl_peer_tracking()
+                          BEGIN
+                            SELECT "Processing peer tracking", CONCAT("Time: ", NOW());
+                            INSERT INTO  kp_etl.kp_etl.etl_peer_tracking(
+                                uuid,
+                                client_id,
+                                visit_id,
+                                visit_date,
+                                location_id,
+                                encounter_id,
+                                encounter_provider,
+                                date_created,
+                                tracing_attempted,
+                                tracing_not_attempted_reason,
+                                attempt_number,
+                                tracing_date,
+                                tracing_type,
+                                tracing_outcome,
+                                is_final_trace,
+                                tracing_outcome_status,
+                                voluntary_exit_comment,
+                                status_in_program,
+                                source_of_information,
+
+                                voided
+                                )
+                            select
+                                   e.uuid,
+                                   e.patient_id,
+                                   e.visit_id,
+                                   (e.encounter_datetime) as visit_date,
+                                   e.location_id,
+                                   e.encounter_id as encounter_id,
+                                   e.creator,
+                                   e.date_created as date_created,
+                                   max(if(o.concept_id=165004,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as tracing_attempted,
+                                   max(if(o.concept_id=165071,(case o.value_coded when 165078 THEN "Contact information illegible" when 165073 then "Location listed too general to make tracking possible"  when 165072 then "Contact information missing" when 163777 then "Cohort register/ peer outreach calendar reviewed and client not lost to follow up" when 5622 then "other"  else "" end),null)) as tracing_not_attempted_reason,
+                                   max(if(o.concept_id=1639,o.value_numeric,null)) as attempt_number,
+                                   max(if(o.concept_id=160753,o.value_datetime,null)) as tracing_date,
+                                   max(if(o.concept_id=164966,(case o.value_coded when 1650 THEN "Phone" when 164965 then "Physical" else "" end),null)) as tracing_type,
+                                   max(if(o.concept_id=160721,(case o.value_coded when 160718 THEN "KP reached" when 160717 then "KP not reached but other informant reached" when 160720 then "KP not reached" else "" end),null)) as tracing_outcome,
+                                   max(if(o.concept_id=163725,(case o.value_coded when 1267 THEN "Yes" when 163339 then "No" else "" end),null)) as is_final_trace,
+                                   max(if(o.concept_id=160433,(case o.value_coded when 160432 THEN "Dead" when 160415 then "Relocated"  when 165219 then "Voluntary exit"  when 134236 then "Enrolled in MAT"  when 165067 then "Untraceable" when 162752 then "Bedridden" when 156761 then "Imprisoned" when 162632then "Found" else "" end),null)) as tracing_outcome_status,
+                                   max(if(o.concept_id=160716,o.value_text,null)) as voluntary_exit_comment,
+                                   max(if(o.concept_id=161641,(case o.value_coded when 5240 THEN "Lost to follow up" when 160031 then "Defaulted" when 161636 then "Active" when 160432 then"Dead" else "" end),null)) as status_in_program,
+                                   max(if(o.concept_id=162568,(case o.value_coded when 164929 THEN "KP" when 165037 then "PE" when 5622 then "other"  else "" end),null)) as source_of_information,
+
+
+                                   e.voided as voided
+                                   from encounter e
+                                   inner join
+                                     (
+                                     select encounter_type_id, uuid, name from encounter_type where uuid in('c4f9db39-2c18-49a6-bf9b-b243d673c64d')
+                                     ) et on et.encounter_type_id=e.encounter_type
+                                   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                              and o.concept_id in (165004,165071,1639,160753,164966,160721,163725,160433,160716,161641,162568)
+                                                  where e.voided=0
+                            group by e.patient_id, e.encounter_id, visit_date;
+                            SELECT "Completed processing Peer tracking data ", CONCAT("Time: ", NOW());
+                            END$$
 
 -- ------------------------------------ populate hts test table ----------------------------------------
 
@@ -852,6 +1027,8 @@ inner join (
 group by e.encounter_id;
 SELECT "Completed processing hts tests";
 END$$
+
+
 
 SET sql_mode=@OLD_SQL_MODE$$
 -- ------------------------------------------- running all procedures -----------------------------
