@@ -29,6 +29,11 @@ CREATE PROCEDURE create_etl_tables()
     DROP TABLE IF EXISTS kp_etl.etl_clinical_visit;
     DROP TABLE IF EXISTS kp_etl.etl_peer_calendar;
     DROP TABLE IF EXISTS kp_etl.etl_sti_treatment;
+    DROP TABLE if exists kp_etl.etl_patient_demographics;
+
+    DROP TABLE IF EXISTS kp_etl.etl_peer_tracking;
+    DROP TABLE IF EXISTS kp_etl.etl_gender_based_violence;
+
     SET FOREIGN_KEY_CHECKS=1;
 
     create table kp_etl.etl_client_registration (
@@ -61,7 +66,83 @@ CREATE PROCEDURE create_etl_tables()
     );
 
     SELECT "Successfully created etl_client_registration table";
+    --- gender based violence
+    CREATE TABLE kenyaemr_etl.etl_gender_based_violence (
+      uuid char(38),
+      provider INT(11),
+      client_id INT(11) NOT NULL ,
+      visit_id INT(11),
+      visit_date DATE,
+      location_id INT(11) DEFAULT NULL,
+      encounter_id INT(11) NOT NULL PRIMARY KEY,
+      is_physically_abused VARCHAR(10),
+      physical_abuse_perpetrator VARCHAR(100),
+      other_physical_abuse_perpetrator VARCHAR(100),
+      in_physically_abusive_relationship VARCHAR(10),
+      in_physically_abusive_relationship_with VARCHAR(100),
+      other_physically_abusive_relationship_perpetrator VARCHAR(100),
+      in_emotionally_abusive_relationship VARCHAR(10),
+      emotional_abuse_perpetrator VARCHAR(100),
+      other_emotional_abuse_perpetrator VARCHAR(100),
+      in_sexually_abusive_relationship VARCHAR(10),
+      sexual_abuse_perpetrator VARCHAR(100),
+      other_sexual_abuse_perpetrator VARCHAR(100),
+      ever_abused_by_unrelated_person VARCHAR(10),
+      unrelated_perpetrator VARCHAR(100),
+      other_unrelated_perpetrator VARCHAR(100),
+      sought_help VARCHAR(10),
+      help_provider VARCHAR(100),
+      date_helped DATE,
+      help_outcome VARCHAR(100),
+      other_outcome VARCHAR(100),
+      reason_for_not_reporting VARCHAR(100),
+      other_reason_for_not_reporting VARCHAR(100),
+      date_created DATETIME NOT NULL,
+      date_last_modified DATETIME,
+      voided INT(11),
+      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+      CONSTRAINT unique_uuid UNIQUE(uuid),
+      INDEX(visit_date),
+      INDEX(encounter_id),
+      INDEX(client_id)
+    );
 
+-- create table etl_patient_demographics
+create table kp_etl.etl_patient_demographics (
+patient_id INT(11) not null primary key,
+given_name VARCHAR(255),
+middle_name VARCHAR(255),
+family_name VARCHAR(255),
+Gender VARCHAR(10),
+DOB DATE,
+national_id_no VARCHAR(50),
+unique_patient_no VARCHAR(50),
+patient_clinic_number VARCHAR(15) DEFAULT NULL,
+Tb_no VARCHAR(50),
+district_reg_no VARCHAR(50),
+hei_no VARCHAR(50),
+phone_number VARCHAR(50) DEFAULT NULL,
+birth_place VARCHAR(50) DEFAULT NULL,
+citizenship VARCHAR(50) DEFAULT NULL,
+email_address VARCHAR(100) DEFAULT NULL,
+next_of_kin VARCHAR(255) DEFAULT NULL,
+next_of_kin_phone VARCHAR(100) DEFAULT NULL,
+next_of_kin_relationship VARCHAR(100) DEFAULT NULL,
+marital_status VARCHAR(50) DEFAULT NULL,
+education_level VARCHAR(50) DEFAULT NULL,
+dead INT(11),
+death_date DATE DEFAULT NULL,
+voided INT(11),
+date_created DATETIME NOT NULL,
+date_last_modified DATETIME,
+index(patient_id),
+index(Gender),
+index(unique_patient_no),
+index(DOB)
+
+);
+
+SELECT "Successfully created etl_patient_demographics table";
     -- create table etl_contact
     create table kp_etl.etl_contact (
       uuid char(38) ,

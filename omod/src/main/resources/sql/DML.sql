@@ -878,5 +878,113 @@ SELECT "Completed first time setup", CONCAT("Time: ", NOW());
 
 END$$
 
+-- ------------- populate kp Gender based violence-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_gender_based_violence$$
+CREATE PROCEDURE sp_populate_etl_gender_based_violence()
+BEGIN
+SELECT "Processing kp gender based violence form", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_gender_based_violence(
+uuid,
+provider,
+client_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+is_physically_abused,
+physical_abuse_perpetrator,
+other_physical_abuse_perpetrator,
+in_physically_abusive_relationship,
+in_physically_abusive_relationship_with,
+other_physically_abusive_relationship_perpetrator,
+in_emotionally_abusive_relationship,
+emotional_abuse_perpetrator,
+other_emotional_abuse_perpetrator,
+in_sexually_abusive_relationship,
+sexual_abuse_perpetrator,
+other_sexual_abuse_perpetrator,
+ever_abused_by_unrelated_person,
+unrelated_perpetrator,
+other_unrelated_perpetrator,
+sought_help,
+help_provider,
+date_helped,
+help_outcome,
+other_outcome,
+reason_for_not_reporting,
+other_reason_for_not_reporting,
+date_created,
+date_last_modified,
+voided
+)
+select
+e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id, e.encounter_id,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as is_physically_abused,
+max(if(o.concept_id=159449,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 1067 then "Stranger" when 5622 then "Other" else "" end),null)) as physical_abuse_perpetrator,
+max(if(o.concept_id=165230, o.value_text, "" )) as other_physical_abuse_perpetrator,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as in_physically_abusive_relationship,
+max(if(o.concept_id=164352,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 5620 then "Relative" when 5622 then "Other" else "" end),null)) as in_physically_abusive_relationship_with,
+max(if(o.concept_id=165230, o.value_text, "" )) as other_physically_abusive_relationship_perpetrator,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as in_emotionally_abusive_relationship,
+max(if(o.concept_id=164352,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 5620 then "Relative" when 5622 then "Other" else "" end),null)) as emotional_abuse_perpetrator,
+max(if(o.concept_id=165230, o.value_text, "" )) as other_emotional_abuse_perpetrator,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as in_sexually_abusive_relationship,
+max(if(o.concept_id=164352,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 5620 then "Relative" when 5622 then "Other" else "" end),null)) as sexual_abuse_perpetrator,
+max(if(o.concept_id=165230, o.value_text, "" )) as other_sexual_abuse_perpetrator,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as ever_abused_by_unrelated_person,
+max(if(o.concept_id=164352,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 5620 then "Relative" when 5622 then "Other" else "" end),null)) as unrelated_perpetrator,
+max(if(o.concept_id=165230, o.value_text, "" )) as other_unrelated_perpetrator,
+max(if(o.concept_id=162871,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as sought_help,
+max(if(o.concept_id=162886,(case o.value_coded when 1589 THEN "Hospital" when 165284 then "Police" when 165037 then "Peer Educator" when 1560 then "Family" when 165294 then "Peers" when 5618 then "Friends"
+                          when 165290 then "Religious Leader" when 165350 then "Dice" when 162690 then "Chief" when 5622 then "Other" else "" end),null)) as help_provider,
+max(if(o.concept_id = 160753, o.value_datetime, "" )) as date_helped,
+max(if(o.concept_id=162875,(case o.value_coded when 1066 then "No action taken"
+        when 165070 then "Counselling"
+        when 160570 then "Emergency pills"
+        when 1356 then "Hiv testing"
+        when 130719 then "Investigation done"
+        when 135914 then "Matter presented to court"
+        when 165228 then "P3 form issued"
+        when 165171 then "PEP given"
+        when 165192 then "Perpetrator arrested"
+        when 127910 then "Post rape care"
+        when 165203 then "PrEP given"
+        when 5618 then "Reconciliation"
+        when 165093 then "Referred back to the family"
+        when 165274 then "Referred to hospital"
+        when 165180 then "Statement taken"
+        when 165200 then "STI Prophylaxis"
+        when 165184 then "Trauma counselling done"
+        when 1185 then "Treatment"
+        when 5622 then "Other"
+        else "" end),null)) as help_outcome,
+max(if(o.concept_id = 165230, o.value_text, "" )) as other_outcome,
+max(if(o.concept_id=6098,(case o.value_coded
+       when 162951 then "Did not know where to report"
+       when 1811 then "Distance"
+       when 140923 then "Exhaustion/Lack of energy"
+       when 163473 then "Fear shame"
+       when 159418 then "Lack of faith in system"
+       when 162951 then "Lack of knowledge"
+       when 664 then "Negative attitude of the person reported to"
+       when 143100 then "Not allowed culturally"
+       when 165161 then "Perpetrator above the law"
+       when 163475 then "Self blame"
+       else "" end),null)) as reason_for_not_reporting,
+max(if(o.concept_id = 165230, o.value_text, "" )) as other_reason_for_not_reporting,
+e.date_created as date_created,
+if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+e.voided as voided
+from openmrs.encounter e
+inner join openmrs.person p on p.person_id=e.patient_id and p.voided=0
+inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ("94eec122-83a1-11ea-bc55-0242ac130003")
+inner join openmrs.obs o on o.encounter_id = e.encounter_id and o.concept_id in (160658,159449,165230,160658,164352,162871,162886,160753,162875,6098) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+SELECT "Completed processing gender based violence form", CONCAT("Time: ", NOW());
+
+END$$
+
 
 
