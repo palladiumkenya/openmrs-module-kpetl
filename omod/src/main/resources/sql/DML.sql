@@ -853,6 +853,163 @@ group by e.encounter_id;
 SELECT "Completed processing hts tests";
 END$$
 
+DROP PROCEDURE IF EXISTS sp_populate_violence_screening$$
+CREATE PROCEDURE sp_populate_violence_screening()
+BEGIN
+SELECT "Processing violence screening";
+	  INSERT INTO kp_etl.etl_violence_screening(
+encounter_id,
+client_id,
+location_id,
+visit_date,
+visit_id,
+encounter_provider,
+date_created,
+incident_place,
+incident_date,
+person_abused,
+verbal_abuse,
+physical_abuse,
+discrimination,
+sexual_abuse,
+illegal_arrest,
+harrassment,
+local_gang_perpetrator,
+police_perpetrator,
+general_public_perpetrator,
+client_perpetrator,
+community_member_perpetrator,
+local_authority_perpetrator,
+health_care_provider_perpetrator,
+education_institution_perpetrator,
+religious_group_perpetrator,
+drug_peddler_perpetrator,
+pimp_perpetrator,
+bar_owner_manager_perpetrator,
+family_perpetrator,
+partner_perpetrator,
+neighbour_perpetrator,
+employer_perpetrator,
+other_perpetrator,
+other_specified_perpetrator,
+first_response_date,
+violence_support_given,
+prc_hts,
+prc_hts_within_5_days,
+prc_emergency_contraception,
+prc_emergency_contraception_within_5_days,
+prc_complaint_reg_at_police_stn,
+prc_complaint_reg_at_police_stn_within_5_days,
+prc_psychological_trauma_counselling,
+prc_psychological_trauma_counselling_within_5_days,
+prc_pep_duration,
+prc_pep_within_5_days,
+prc_sti_screening_treatment,
+prc_sti_screening_treatment_within_5_days,
+prc_legal_support,
+prc_legal_support_within_5_days,
+prc_medical_examination,
+prc_medical_examination_within_5_days,
+prc_form_file,
+prc_form_file_within_5_days,
+prc_other_services_given,
+non_sexual_medical_services_and_care,
+non_sexual_medical_services_and_care_within_5_days,
+non_sexual_psychological_counselling,
+non_sexual_psychological_counselling_within_5_days,
+non_sexual_complaint_reg_at_police_stn,
+non_sexual_complaint_reg_at_police_stn_within_5_days,
+non_sexual_legal_support,
+non_sexual_legal_support_within_5_days,
+current_state_of_victim,
+follow_up_plan,
+issue_resolution_date,
+voided
+)
+select
+e.encounter_id,
+e.patient_id as client_id,
+e.location_id,
+e.encounter_datetime as visit_date,
+e.visit_id,
+e.creator,
+e.date_created,
+max(if(o.concept_id=162725,o.value_text,null)) as incident_place,
+max(if(o.concept_id=160753,o.value_datetime,null)) as incident_date,
+max(if(o.concept_id=165164,o.value_coded,null)) as person_abused,
+max(if(o.concept_id=165228 and o.value_coded=123007,value_coded,null)) as verbal_abuse,
+max(if(o.concept_id=165228 and o.value_coded=152292,value_coded,null)) as physical_abuse,
+max(if(o.concept_id=165228 and o.value_coded=126312,o.value_coded,null)) as discrimination,
+max(if(o.concept_id=165228 and o.value_coded=152370,value_coded,null)) as sexual_abuse,
+max(if(o.concept_id=165228 and o.value_coded=156761,value_coded,null)) as illegal_arrest,
+max(if(o.concept_id=165228 and o.value_coded=165161,value_coded,null)) as harrassment,
+max(if(o.concept_id=165283,o.value_coded,null)) as local_gang_perpetrator,
+max(if(o.concept_id=165284,o.value_coded,null)) as police_perpetrator,
+max(if(o.concept_id=165285,o.value_coded,null)) as general_public_perpetrator,
+max(if(o.concept_id=165286,o.value_coded,null)) as client_perpetrator,
+max(if(o.concept_id=163488,o.value_coded,null)) as community_member_perpetrator,
+max(if(o.concept_id=165193,o.value_coded,null)) as local_authority_perpetrator,
+max(if(o.concept_id=5619,o.value_coded,null)) as health_care_provider_perpetrator,
+max(if(o.concept_id=165289,o.value_coded,null)) as education_institution_perpetrator,
+max(if(o.concept_id=165290,o.value_coded,null)) as religious_group_perpetrator,
+max(if(o.concept_id=165291,o.value_coded,null)) as drug_peddler_perpetrator,
+max(if(o.concept_id=165292,o.value_coded,null)) as pimp_perpetrator,
+max(if(o.concept_id=165293,o.value_coded,null)) as bar_owner_manager_perpetrator,
+max(if(o.concept_id=1560,o.value_coded,null)) as family_perpetrator,
+max(if(o.concept_id=165294,o.value_coded,null)) as partner_perpetrator,
+max(if(o.concept_id=165295,o.value_coded,null)) as neighbour_perpetrator,
+max(if(o.concept_id=165296,o.value_coded,null)) as employer_perpetrator,
+max(if(o.concept_id=165241,o.value_coded,null)) as other_perpetrator,
+max(if(o.concept_id=165230,o.value_text,null)) as other_specified_perpetrator,
+max(if(o.concept_id=165349,o.value_datetime,null)) as first_response_date,
+max(if(o.concept_id=165225,o.value_text,null)) as violence_support_given,
+max(if(o.concept_id=159368,o.value_numeric,null)) as prc_hts,
+max(if(o.concept_id=165165,o.value_coded,null)) as prc_hts_within_5_days,
+max(if(o.concept_id=165166,o.value_numeric,null)) as prc_emergency_contraception,
+max(if(o.concept_id=165167,o.value_coded,null)) as prc_emergency_contraception_within_5_days,
+max(if(o.concept_id=165179,o.value_numeric,null)) as prc_complaint_reg_at_police_stn,
+max(if(o.concept_id=165180,o.value_coded,null)) as prc_complaint_reg_at_police_stn_within_5_days,
+max(if(o.concept_id=165168,o.value_numeric,null)) as prc_psychological_trauma_counselling,
+max(if(o.concept_id=165169,o.value_coded,null)) as prc_psychological_trauma_counselling_within_5_days,
+max(if(o.concept_id=165170,o.value_numeric,null)) as prc_pep_duration,
+max(if(o.concept_id=165171,o.value_coded,null)) as prc_pep_within_5_days,
+max(if(o.concept_id=165190,o.value_numeric,null)) as prc_sti_screening_treatment,
+max(if(o.concept_id=165172,o.value_coded,null)) as prc_sti_screening_treatment_within_5_days,
+max(if(o.concept_id=165173,o.value_numeric,null)) as prc_legal_support,
+max(if(o.concept_id=165174,o.value_coded,null)) as prc_legal_support_within_5_days,
+max(if(o.concept_id=165175,o.value_numeric,null)) as prc_medical_examination,
+max(if(o.concept_id=165176,o.value_coded,null)) as prc_medical_examination_within_5_days,
+max(if(o.concept_id=165178,o.value_numeric,null)) as prc_form_file,
+max(if(o.concept_id=165177,o.value_coded,null)) as prc_form_file_within_5_days,
+max(if(o.concept_id=163108,o.value_text,null)) as prc_other_services_given,
+max(if(o.concept_id=165181,o.value_numeric,null)) as non_sexual_medical_services_and_care,
+max(if(o.concept_id=165182,o.value_coded,null)) as non_sexual_medical_services_and_care_within_5_days,
+max(if(o.concept_id=165183,o.value_numeric,null)) as non_sexual_psychological_counselling,
+max(if(o.concept_id=165184,o.value_coded,null)) as non_sexual_psychological_counselling_within_5_days,
+max(if(o.concept_id=165185,o.value_numeric,null)) as non_sexual_complaint_reg_at_police_stn,
+max(if(o.concept_id=165186,o.value_coded,null)) as non_sexual_complaint_reg_at_police_stn_within_5_days,
+max(if(o.concept_id=165187,o.value_numeric,null)) as non_sexual_legal_support,
+max(if(o.concept_id=165188,o.value_coded,null)) as non_sexual_legal_support_within_5_days,
+max(if(o.concept_id=165189,o.value_coded,null)) as current_state_of_victim,
+max(if(o.concept_id=164378,o.value_text,null)) as follow_up_plan,
+max(if(o.concept_id=165224,o.value_datetime,null)) as issue_resolution_date,
+e.voided
+from encounter e
+   inner join
+     (
+     select encounter_type_id, uuid, name from encounter_type where uuid ='7b69daf5-b567-4384-9d29-f020c408d613'
+     ) et on et.encounter_type_id=e.encounter_type
+   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                              and o.concept_id in (162725,160753,165164,165228,165283,165284,165285,165286,163488,165193,5619,
+                              165289,165290,165291,165292,165293,1560,165294,165295,165296,165241,5622,165230,165349,165225,159368,165165,
+                              165166,165167,165179,165180,165168,165169,165170,165171,165190,165172,165173,165174,165175,165176,165178,
+                              165177,163108,165181,165182,165183,165184,165185,165186,165187,165188,165189,164378,165224)
+                  where e.voided=0
+group by e.patient_id, e.encounter_id, visit_date;
+SELECT "Completed processing violence screening";
+END$$
+
+
 SET sql_mode=@OLD_SQL_MODE$$
 -- ------------------------------------------- running all procedures -----------------------------
 
@@ -871,6 +1028,7 @@ CALL sp_populate_etl_clinical_visit();
 CALL sp_populate_etl_sti_treatment();
 CALL sp_populate_etl_peer_calendar();
 CALL sp_populate_hts_test();
+CALL sp_populate_violence_screening();
 
 UPDATE kp_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

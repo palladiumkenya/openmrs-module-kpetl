@@ -120,7 +120,7 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
 
     END$$
     DROP PROCEDURE IF EXISTS sp_update_etl_contact$$
-    CREATE PROCEDURE sp_update_etl_contact()
+    CREATE PROCEDURE sp_update_etl_contact(IN last_update_time DATETIME)
       BEGIN
         SELECT "Processing client contact data ", CONCAT("Time: ", NOW());
         insert into kp_etl.etl_contact (
@@ -223,7 +223,7 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
         END$$
 
         DROP PROCEDURE IF EXISTS sp_update_etl_client_enrollment$$
-        CREATE PROCEDURE sp_update_etl_client_enrollment()
+        CREATE PROCEDURE sp_update_etl_client_enrollment(IN last_update_time DATETIME)
           BEGIN
             SELECT "Processing client enrollment data ", CONCAT("Time: ", NOW());
             insert into kp_etl.etl_client_enrollment (
@@ -329,7 +329,7 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
             -- ------------- populate etl_clinical_visit--------------------------------
 
             DROP PROCEDURE IF EXISTS sp_update_etl_clinical_visit$$
-            CREATE PROCEDURE sp_update_etl_clinical_visit()
+            CREATE PROCEDURE sp_update_etl_clinical_visit(IN last_update_time DATETIME)
               BEGIN
                 SELECT "Processing Clinical Visit ", CONCAT("Time: ", NOW());
                 INSERT INTO kp_etl.etl_clinical_visit(
@@ -716,7 +716,7 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
             -- ------------- populate etl_sti_treatment--------------------------------
 
                 DROP PROCEDURE IF EXISTS sp_update_etl_sti_treatment$$
-                CREATE PROCEDURE sp_update_etl_sti_treatment()
+                CREATE PROCEDURE sp_update_etl_sti_treatment(IN last_update_time DATETIME)
                   BEGIN
                     SELECT "Processing STI Treatment ", CONCAT("Time: ", NOW());
                     INSERT INTO kp_etl.etl_sti_treatment(
@@ -818,7 +818,7 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
             -- ------------- populate etl_peer_calendar--------------------------------
 
                 DROP PROCEDURE IF EXISTS sp_update_etl_peer_calendar$$
-                CREATE PROCEDURE sp_update_etl_peer_calendar()
+                CREATE PROCEDURE sp_update_etl_peer_calendar(IN last_update_time DATETIME)
                   BEGIN
                     SELECT "Processing Peer calendar ", CONCAT("Time: ", NOW());
                     INSERT INTO  kp_etl.etl_peer_calendar(
@@ -937,7 +937,7 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
 -- ------------------------------------ populate hts test table ----------------------------------------
 
 DROP PROCEDURE IF EXISTS sp_update_hts_test$$
-CREATE PROCEDURE sp_update_hts_test()
+CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
 BEGIN
 SELECT "Processing hts tests";
 INSERT INTO kp_etl.etl_hts_test (
