@@ -35,6 +35,8 @@ CREATE PROCEDURE create_etl_tables()
     DROP TABLE IF EXISTS kp_etl.etl_CHW_overdose_reporting;
     DROP TABLE IF EXISTS kp_etl.etl_patient_triage;
     DROP TABLE IF EXISTS kp_etl.etl_diagnosis;
+    DROP TABLE IF EXISTS kp_etl.etl_peer_tracking;
+    DROP TABLE IF EXISTS kp_etl.etl_gender_based_violence;
 
     -- create table etl_client_registration
     create table kp_etl.etl_client_registration (
