@@ -1009,6 +1009,456 @@ group by e.patient_id, e.encounter_id, visit_date;
 SELECT "Completed processing violence screening";
 END$$
 
+ DROP PROCEDURE IF EXISTS sp_populate_etl_peer_tracking$$
+             CREATE PROCEDURE sp_populate_etl_peer_tracking()
+               BEGIN
+                 SELECT "Processing peer tracking ", CONCAT("Time: ", NOW());
+                 insert into kp_etl.etl_peer_tracking (
+                     uuid,
+                     client_id,
+                     visit_id,
+                     visit_date,
+                     location_id,
+                     encounter_id,
+                     encounter_provider,
+                     date_created,
+                     tracing_attempted,
+                     tracing_not_attempted_reason,
+                     attempt_number,
+                     tracing_date,
+                     tracing_type,
+                     tracing_outcome,
+                     is_final_trace,
+                     tracing_outcome_status,
+                     voluntary_exit_comment,
+                     status_in_program,
+                     source_of_information,
+                     other_informant,
+                     date_last_modified,
+                     voided
+                     )
+                  select
+                      e.uuid,
+                      e.patient_id,
+                      e.visit_id,
+                      (e.encounter_datetime) as visit_date,
+                      e.location_id,
+                      e.encounter_id as encounter_id,
+                      e.creator,
+                      e.date_created as date_created,
+                      max(if(o.concept_id=165004, o.value_coded ,null)) as tracing_attempted,
+                      max(if(o.concept_id=165071, o.value_coded ,null)) as tracing_not_attempted_reason,
+                      max(if(o.concept_id=1639,o.value_numeric,null)) as attempt_number,
+                      max(if(o.concept_id=160753,o.value_datetime,null)) as tracing_date,
+                      max(if(o.concept_id=164966, o.value_coded ,null)) as tracing_type,
+                      max(if(o.concept_id=160721, o.value_coded,null)) as tracing_outcome,
+                      max(if(o.concept_id=163725,o.value_coded ,null)) as is_final_trace,
+                      max(if(o.concept_id=160433,o.value_coded ,null)) as tracing_outcome_status,
+                      max(if(o.concept_id=160716,o.value_text,null)) as voluntary_exit_comment,
+                      max(if(o.concept_id=161641, o.value_coded,null)) as status_in_program,
+                      max(if(o.concept_id=162568, o.value_coded ,null)) as source_of_information,
+                      max(if(o.concept_id=160632, o.value_coded ,null)) as other_informant,
+     				 e.date_created as date_last_modified,
+                      e.voided as voided
+                      from encounter e
+                      inner join
+                        (
+                        select encounter_type_id, uuid, name from encounter_type where uuid in('ce841b19-0acd-46fd-b223-2ca9b5356237')
+                        ) et on et.encounter_type_id=e.encounter_type
+                      left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                 and o.concept_id in (165004,165071,1639,160753,164966,160721,163725,160433,160716,161641,162568)
+                                     where e.voided=0
+               group by e.patient_id, e.encounter_id, visit_date;
+               SELECT "Completed processing Peer tracking data ", CONCAT("Time: ", NOW());
+               END$$
+    -- ------------- populate etl_referral--------------------------------
+
+        DROP PROCEDURE IF EXISTS sp_populate_etl_referral$$
+        CREATE PROCEDURE sp_populate_etl_referral()
+          BEGIN
+            SELECT "Processing referrals ", CONCAT("Time: ", NOW());
+            INSERT INTO  kp_etl.etl_referral(
+                uuid,
+                client_id,
+                visit_id,
+                visit_date,
+                location_id,
+                encounter_id,
+                encounter_provider,
+                date_created,
+                referral_order,
+                referral_date,
+                institution_referred,
+                service_referred_for,
+                contact_person,
+                referred_outcome,
+                remarks,
+                voided
+                )
+            select
+                   e.uuid,
+                   e.patient_id,
+                   e.visit_id,
+                   (e.encounter_datetime) as visit_date,
+                   e.location_id,
+                   e.encounter_id as encounter_id,
+                   e.creator,
+                   e.date_created as date_created,
+
+                   max(if(o.concept_id=1272,o.value_coded,null)) as referral_order,
+                   max(if(o.concept_id=161561,o.value_datetime,null)) as referral_date,
+                   max(if(o.concept_id=162724,o.value_text,null)) as institution_referred,
+                   max(if(o.concept_id=160478,o.value_coded,null)) as service_referred_for,
+                   max(if(o.concept_id=1473,o.value_text,null)) as contact_person,
+                    max(if(o.concept_id=165152,o.value_coded,null)) as referred_outcome,
+                   max(if(o.concept_id=160632,o.value_text,null)) as remarks,
+                   e.voided as voided
+                   from encounter e
+                   inner join
+                     (
+                     select encounter_type_id, uuid, name from encounter_type where uuid in('596f878f-5adf-4f8e-8829-6a87aaeda9a3')
+                     ) et on et.encounter_type_id=e.encounter_type
+                   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                              and o.concept_id in (1272,161561,162724,160478,1473,165152,160632)
+                                  where e.voided=0
+            group by e.patient_id, e.encounter_id, visit_date;
+            SELECT "Completed processing Peer referral data ", CONCAT("Time: ", NOW());
+            END$$
+      -- ------------- populate etl_alcohol_screening--------------------------------
+
+            DROP PROCEDURE IF EXISTS sp_populate_etl_alcohol_screening$$
+            CREATE PROCEDURE sp_populate_etl_alcohol_screening()
+              BEGIN
+                SELECT "Processing alcohol screening", CONCAT("Time: ", NOW());
+                INSERT INTO  kp_etl.etl_alcohol_screening(
+                    uuid,
+                    client_id,
+                    visit_id,
+                    visit_date,
+                    location_id,
+                    encounter_id,
+                    encounter_provider,
+                    date_created,
+                    how_often_do_you_drink,
+                    how_many_drinks_you_take,
+                    how_often_do_you_drink_six_or_more,
+                    how_often_you_cant_stop_once_started,
+                    how_often_you_failed_task_due_to_drinking,
+                    how_often_you_needed_first_drink,
+                    how_often_have_you_felt_guilt,
+                    not_able_to_remember_becouse_of_drink,
+                    injury_as_a_result_of_drinking,
+                    people_concerned_about_your_drinking,
+                    total,
+                    remarks,
+                    voided
+                    )
+                select
+                       e.uuid,
+                       e.patient_id,
+                       e.visit_id,
+                       (e.encounter_datetime) as visit_date,
+                       e.location_id,
+                       e.encounter_id as encounter_id,
+                       e.creator,
+                       e.date_created as date_created,
+                       max(if(o.concept_id=159449, o.value_coded ,null)) as how_often_do_you_drink,
+                       max(if(o.concept_id=165118, o.value_coded,null)) as how_many_drinks_you_take,
+                       max(if(o.concept_id=165119, o.value_coded,null)) as how_often_do_you_drink_six_or_more,
+                       max(if(o.concept_id=165120, o.value_coded ,null)) as how_often_you_cant_stop_once_started,
+                       max(if(o.concept_id=165121, o.value_coded ,null)) as how_often_you_failed_task_due_to_drinking,
+                       max(if(o.concept_id=165122, o.value_coded ,null)) as how_often_you_needed_first_drink,
+                       max(if(o.concept_id=165123, o.value_coded ,null)) as how_often_have_you_felt_guilt,
+                       max(if(o.concept_id=165124, o.value_coded ,null)) as not_able_to_remember_becouse_of_drink,
+                       max(if(o.concept_id=165125, o.value_coded ,null)) as injury_as_a_result_of_drinking,
+                       max(if(o.concept_id=165126, o.value_coded ,null)) as people_concerned_about_your_drinking,
+                       max(if(o.concept_id=160632,o.value_text,null)) as total,
+                       max(if(o.concept_id=163042,o.value_text,null)) as remarks,
+
+                       e.voided as voided
+                       from encounter e
+                       inner join
+                         (
+                         select encounter_type_id, uuid, name from encounter_type where uuid in('a3ce2705-d72d-458a-a76c-dae0f93398e7')
+                         ) et on et.encounter_type_id=e.encounter_type
+                       left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                  and o.concept_id in (159449,165118,165119,165120,165121,165122,165123,165124,165125,165126,160632,163042)
+                                      where e.voided=0
+                group by e.patient_id, e.encounter_id, visit_date;
+                SELECT "Completed processing alcohol screening data ", CONCAT("Time: ", NOW());
+                END$$
+
+  -- ------------- populate etl_peer_overdose_reporting--------------------------------
+
+        DROP PROCEDURE IF EXISTS sp_populate_etl_peer_overdose_reporting$$
+        CREATE PROCEDURE sp_populate_etl_peer_overdose_reporting()
+          BEGIN
+            SELECT "Processing peer overdose reporting", CONCAT("Time: ", NOW());
+            INSERT INTO  kp_etl.etl_peer_overdose_reporting(
+                uuid,
+                client_id,
+                visit_id,
+                visit_date,
+                location_id,
+                encounter_id,
+                encounter_provider,
+                date_created,
+
+                address_overdose_happened,
+                incident_type,
+                hotspot,
+                type_of_site,
+                naloxone_provided,
+                specific_drug_use,
+                outcome	,
+                reported_by,
+                reported_date,
+                witnessed_by ,
+                witnessed_date ,
+                remarks,
+                voided
+                )
+            select
+                   e.uuid,
+                   e.patient_id,
+                   e.visit_id,
+                   (e.encounter_datetime) as visit_date,
+                   e.location_id,
+                   e.encounter_id as encounter_id,
+                   e.creator,
+                   e.date_created as date_created,
+                   max(if(o.concept_id=162725, o.value_text ,null)) as address_overdose_happened,
+                   max(if(o.concept_id=165133, o.value_coded,null)) as incident_type,
+                   max(if(o.concept_id=165006, o.value_text,null)) as hotspot,
+                   max(if(o.concept_id=165005, o.value_coded ,null)) as type_of_site ,
+                   max(if(o.concept_id=165136, o.value_coded ,null)) as naloxone_provided,
+                   max(if(o.concept_id=1193, o.value_coded ,null)) as specific_drug_use,
+                   max(if(o.concept_id=160632, o.value_text ,null)) as remarks,
+                   max(if(o.concept_id=165141, o.value_coded ,null)) as outcome,
+                   max(if(o.concept_id=1473, o.value_text ,null)) as reported_by,
+                   max(if(o.concept_id=165144, o.value_coded ,null)) as reported_date,
+                   max(if(o.concept_id=165143,o.value_text,null)) as witnessed_by,
+                   max(if(o.concept_id=160753, o.value_coded ,null)) as witnessed_date,
+                   e.voided as voided
+                   from encounter e
+                   inner join
+                     (
+                     select encounter_type_id, uuid, name from encounter_type where uuid in('c3fb7831-f8fc-4b71-bd54-f23cdd77e305')
+                     ) et on et.encounter_type_id=e.encounter_type
+                   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                              and o.concept_id in (162725,165133,165006,165005,165136,1193,160632,165141,1473,165144,165143,160753)
+                                  where e.voided=0
+            group by e.patient_id, e.encounter_id, visit_date;
+            SELECT "Completed processing peer overdose reporting ", CONCAT("Time: ", NOW());
+            END$$
+-- ------------- populate etl_CHW_overdose_reporting--------------------------------
+
+            DROP PROCEDURE IF EXISTS sp_populate_etl_CHW_overdose_reporting$$
+            CREATE PROCEDURE sp_populate_etl_CHW_overdose_reporting()
+              BEGIN
+                SELECT "processing CHW overdose reporting dat", CONCAT("Time: ", NOW());
+                INSERT INTO  kp_etl.etl_CHW_overdose_reporting(
+                    uuid,
+                    client_id,
+                    visit_id,
+                    visit_date,
+                    location_id,
+                    encounter_id,
+                    encounter_provider,
+                    date_created,
+
+                    address_overdose_happened,
+                    incident_type,
+                    hotspot,
+                    type_of_site,
+                    naloxone_provided,
+                    specific_drug_use,
+                    outcome	,
+                    reported_by,
+                    reported_date,
+                    witnessed_by ,
+                    witnessed_date ,
+                    remarks,
+                    voided
+                    )
+                select
+                       e.uuid,
+                       e.patient_id,
+                       e.visit_id,
+                       (e.encounter_datetime) as visit_date,
+                       e.location_id,
+                       e.encounter_id as encounter_id,
+                       e.creator,
+                       e.date_created as date_created,
+                       max(if(o.concept_id=162725, o.value_text ,null)) as address_overdose_happened,
+                       max(if(o.concept_id=165133, o.value_coded,null)) as incident_type,
+                       max(if(o.concept_id=165006, o.value_text,null)) as hotspot,
+                       max(if(o.concept_id=165005, o.value_coded ,null)) as type_of_site ,
+                       max(if(o.concept_id=165136, o.value_coded ,null)) as naloxone_provided,
+                       max(if(o.concept_id=1193, o.value_coded ,null)) as specific_drug_use,
+                       max(if(o.concept_id=160632, o.value_text ,null)) as remarks,
+                       max(if(o.concept_id=165141, o.value_coded ,null)) as outcome,
+                       max(if(o.concept_id=1473, o.value_text ,null)) as reported_by,
+                       max(if(o.concept_id=165144, o.value_coded ,null)) as reported_date,
+                       max(if(o.concept_id=165143,o.value_text,null)) as witnessed_by,
+                       max(if(o.concept_id=160753, o.value_coded ,null)) as witnessed_date,
+                       e.voided as voided
+                       from encounter e
+                       inner join
+                         (
+                         select encounter_type_id, uuid, name from encounter_type where uuid in('383974fe-58ef-488f-bdff-8962f4dd7518')
+                         ) et on et.encounter_type_id=e.encounter_type
+                       left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                  and o.concept_id in (162725,165133,165006,165005,165136,1193,160632,165141,1473,165144,165143,160753)
+                                      where e.voided=0
+                group by e.patient_id, e.encounter_id, visit_date;
+                SELECT "Completed processing CHW overdose reporting data ", CONCAT("Time: ", NOW());
+                END$$
+
+            -- ------------- populate etl_patient_triage--------------------------------
+                DROP PROCEDURE IF EXISTS sp_populate_etl_patient_triage$$
+                CREATE PROCEDURE sp_populate_etl_patient_triage()
+                    BEGIN
+                        SELECT "Processing Patient Triage ", CONCAT("Time: ", NOW());
+                        INSERT INTO kp_etl.etl_patient_triage(
+                          uuid,
+                          client_id,
+                          visit_id,
+                          visit_date,
+                          location_id,
+                          encounter_id,
+                          encounter_provider,
+                          date_created,
+                            visit_reason,
+                            weight,
+                            height,
+                            systolic_pressure,
+                            diastolic_pressure,
+                            temperature,
+                            pulse_rate,
+                            respiratory_rate,
+                            oxygen_saturation,
+                            muac,
+                            nutritional_status,
+                            last_menstrual_period,
+                      date_last_modified,
+                            voided
+                        )
+                            select
+                                e.uuid,
+                                e.patient_id,
+                                e.visit_id,
+                                date(e.encounter_datetime) as visit_date,
+                                e.location_id,
+                                e.encounter_id as encounter_id,
+                                e.creator,
+                                e.date_created as date_created,
+                                max(if(o.concept_id=160430,trim(o.value_text),null)) as visit_reason,
+                                max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
+                                max(if(o.concept_id=5090,o.value_numeric,null)) as height,
+                                max(if(o.concept_id=5085,o.value_numeric,null)) as systolic_pressure,
+                                max(if(o.concept_id=5086,o.value_numeric,null)) as diastolic_pressure,
+                                max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
+                                max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
+                                max(if(o.concept_id=5242,o.value_numeric,null)) as respiratory_rate,
+                                max(if(o.concept_id=5092,o.value_numeric,null)) as oxygen_saturation,
+                                max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
+                                max(if(o.concept_id=163300,o.value_coded,null)) as nutritional_status,
+                                max(if(o.concept_id=1427,date(o.value_datetime),null)) as last_menstrual_period,
+                                if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+                                e.voided as voided
+                            from encounter e
+                                inner join person p on p.person_id=e.patient_id and p.voided=0
+                                inner join
+                                (
+                                    select encounter_type_id, uuid, name from encounter_type where uuid in('55e67467-bd0b-4940-82c2-3281938afde3')
+                                ) et on et.encounter_type_id=e.encounter_type
+                                left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163300,1427)
+                            where e.voided=0
+                            group by e.patient_id, e.encounter_id, visit_date
+                        ;
+                        SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
+                        END$$
+
+          -- ------------- populate etl_diagnosis--------------------------------
+
+            DROP PROCEDURE IF EXISTS sp_populate_etl_diagnosis$$
+            CREATE PROCEDURE sp_populate_etl_diagnosis()
+              BEGIN
+                SELECT "Processing diagnosis", CONCAT("Time: ", NOW());
+                INSERT INTO  kp_etl.etl_diagnosis(
+                    uuid,
+                    client_id,
+                    visit_id,
+                    visit_date,
+                    location_id,
+                    encounter_id,
+                    encounter_provider,
+                    date_created,
+                    skin_findings,
+                    skin_finding_notes,
+                    eyes_findings,
+                    eyes_finding_notes,
+                    ent_findings,
+                    ent_finding_notes,
+                    chest_findings,
+                    chest_finding_notes,
+                    cvs_findings,
+                    cvs_finding_notes,
+                    abdomen_findings,
+                    abdomen_finding_notes,
+                    cns_findings,
+                    cns_finding_notes,
+                    genitourinary_findings,
+                    genitourinary_finding_notes,
+                    diagnosis,
+                    clinical_notes,
+                    voided
+                    )
+                select
+                       e.uuid,
+                       e.patient_id,
+                       e.visit_id,
+                       (e.encounter_datetime) as visit_date,
+                       e.location_id,
+                       e.encounter_id as encounter_id,
+                       e.creator,
+                       e.date_created as date_created,
+                       max(if(o.concept_id=1120, o.value_coded ,null)) as skin_findings,
+                       max(if(o.concept_id=160981, o.value_text,null)) as skin_finding_notes,
+                       max(if(o.concept_id=163309, o.value_coded ,null)) as eyes_findings ,
+                       max(if(o.concept_id=164938, o.value_text,null)) as eyes_finding_notes,
+                       max(if(o.concept_id=164936, o.value_coded ,null)) as ent_findings,
+                       max(if(o.concept_id=164939, o.value_text ,null)) as ent_finding_notes,
+                       max(if(o.concept_id=1123, o.value_coded ,null)) as chest_findings,
+                       max(if(o.concept_id=163042,o.value_text,null)) as chest_finding_notes,
+                       max(if(o.concept_id=1124, o.value_coded ,null)) as cvs_findings,
+                       max(if(o.concept_id=163046, o.value_text ,null)) as cvs_finding_notes,
+                       max(if(o.concept_id=1125, o.value_coded ,null)) as abdomen_findings,
+                       max(if(o.concept_id=160948,o.value_text,null)) as abdomen_finding_notes,
+                       max(if(o.concept_id=164937, o.value_coded ,null)) as cns_findings,
+                       max(if(o.concept_id=160994, o.value_text ,null)) as cns_finding_notes,
+                       max(if(o.concept_id=1126, o.value_coded ,null)) as genitourinary_findings,
+                       max(if(o.concept_id=163047,o.value_text,null)) as genitourinary_finding_notes,
+                       max(if(o.concept_id=159947,o.value_text,null)) as diagnosis,
+                       max(if(o.concept_id=162169,o.value_text,null)) as clinical_notes,
+                       e.voided as voided
+                       from encounter e
+                       inner join
+                         (
+                         select encounter_type_id, uuid, name from encounter_type where uuid in('928ea6b2-3425-4ee9-854d-daa5ceaade03')
+                         ) et on et.encounter_type_id=e.encounter_type
+                       left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                  and o.concept_id in (1120,160981,163309,164938,164936,164939,1123,163042,1124,163046,1125,160948,164937,160994,1126,163047,159947,162169)
+                                      where e.voided=0
+                group by e.patient_id, e.encounter_id, visit_date;
+                SELECT "Completed processing diagnosis data ", CONCAT("Time: ", NOW());
+                END$$
+
+
+
+
 
 SET sql_mode=@OLD_SQL_MODE$$
 -- ------------------------------------------- running all procedures -----------------------------
@@ -1029,6 +1479,13 @@ CALL sp_populate_etl_sti_treatment();
 CALL sp_populate_etl_peer_calendar();
 CALL sp_populate_hts_test();
 CALL sp_populate_violence_screening();
+CALL sp_populate_etl_peer_tracking();
+CALL sp_populate_etl_referral();
+CALL sp_populate_etl_alcohol_screening();
+CALL sp_populate_etl_peer_overdose_reporting();
+CALL sp_populate_etl_CHW_overdose_reporting();
+CALL sp_populate_etl_patient_triage();
+CALL sp_populate_etl_diagnosis();
 
 UPDATE kp_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

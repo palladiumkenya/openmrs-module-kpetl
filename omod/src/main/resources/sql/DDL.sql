@@ -29,6 +29,12 @@ CREATE PROCEDURE create_etl_tables()
     DROP TABLE IF EXISTS kp_etl.etl_clinical_visit;
     DROP TABLE IF EXISTS kp_etl.etl_peer_calendar;
     DROP TABLE IF EXISTS kp_etl.etl_sti_treatment;
+    DROP TABLE IF EXISTS kp_etl.etl_referral;
+    DROP TABLE IF EXISTS kp_etl.etl_alcohol_screening;
+    DROP TABLE IF EXISTS kp_etl.etl_peer_overdose_reporting;
+    DROP TABLE IF EXISTS kp_etl.etl_CHW_overdose_reporting;
+    DROP TABLE IF EXISTS kp_etl.etl_patient_triage;
+    DROP TABLE IF EXISTS kp_etl.etl_diagnosis;
 
     -- create table etl_client_registration
     create table kp_etl.etl_client_registration (
@@ -471,4 +477,275 @@ index(test_2_kit_name)
       INDEX(client_id)
     );
 
+
+                  CREATE TABLE kp_etl.etl_peer_tracking (
+                      uuid char(38),
+                      client_id INT(11) NOT NULL ,
+                      visit_id INT(11),
+                      visit_date DATE,
+                      location_id INT(11) DEFAULT NULL,
+                      encounter_id INT(11) NOT NULL PRIMARY KEY,
+                      encounter_provider INT(11),
+                      date_created DATE,
+                      tracing_attempted VARCHAR(10),
+                      tracing_not_attempted_reason VARCHAR(100),
+                      attempt_number VARCHAR(11),
+                      tracing_date DATE,
+                      tracing_type VARCHAR(100),
+                      tracing_outcome VARCHAR(100),
+                      is_final_trace VARCHAR(10),
+                      tracing_outcome_status VARCHAR(100),
+                      voluntary_exit_comment VARCHAR(255),
+                      status_in_program VARCHAR(100),
+                      source_of_information VARCHAR(100),
+                      other_informant VARCHAR(100),
+                      date_last_modified DATETIME,
+                      voided INT(11),
+                      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
+                      CONSTRAINT unique_uuid UNIQUE(uuid),
+                      INDEX(visit_date),
+                      INDEX(encounter_id),
+                      INDEX(client_id),
+                      INDEX(status_in_program),
+                      INDEX(tracing_type)
+                      );
+                        SELECT "Successfully created etl_peer_tracking table";
+    -- ------------ create table etl_referral-----------------------
+
+                    CREATE TABLE kp_etl.etl_referral (
+                         uuid char(38) ,
+                         client_id INT(11) NOT NULL,
+                         visit_id INT(11) DEFAULT NULL,
+                         visit_date DATE,
+                         location_id INT(11) DEFAULT NULL,
+                         encounter_id INT(11) NOT NULL PRIMARY KEY,
+                         encounter_provider INT(11),
+                         date_created DATE,
+                        referral_order VARCHAR(10),
+                        referral_date DATETIME,
+                        institution_referred VARCHAR(50),
+                        service_referred_for VARCHAR(50),
+                        contact_person VARCHAR(250),
+                        referred_outcome VARCHAR(50),
+                        remarks VARCHAR(100),
+                        voided INT(11),
+                         CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
+                         CONSTRAINT unique_uuid UNIQUE(uuid),
+                        index(client_id),
+                        index(visit_date)
+                      );
+                       SELECT "Successfully created etl_referral table";
+
+       -- -------------- create table etl_gender_based_violence ----------------------------
+                    CREATE TABLE kp_etl.etl_gender_based_violence (
+                             uuid char(38),
+                             provider INT(11),
+                             client_id INT(11) NOT NULL ,
+                             visit_id INT(11),
+                             visit_date DATE,
+                             location_id INT(11) DEFAULT NULL,
+                             encounter_id INT(11) NOT NULL PRIMARY KEY,
+                             is_physically_abused VARCHAR(10),
+                             physical_abuse_perpetrator VARCHAR(100),
+                             other_physical_abuse_perpetrator VARCHAR(100),
+                             in_physically_abusive_relationship VARCHAR(10),
+                             in_physically_abusive_relationship_with VARCHAR(100),
+                             other_physically_abusive_relationship_perpetrator VARCHAR(100),
+                             in_emotionally_abusive_relationship VARCHAR(10),
+                             emotional_abuse_perpetrator VARCHAR(100),
+                             other_emotional_abuse_perpetrator VARCHAR(100),
+                             in_sexually_abusive_relationship VARCHAR(10),
+                             sexual_abuse_perpetrator VARCHAR(100),
+                             other_sexual_abuse_perpetrator VARCHAR(100),
+                             ever_abused_by_unrelated_person VARCHAR(10),
+                             unrelated_perpetrator VARCHAR(100),
+                             other_unrelated_perpetrator VARCHAR(100),
+                             sought_help VARCHAR(10),
+                             help_provider VARCHAR(100),
+                             date_helped DATE,
+                             help_outcome VARCHAR(100),
+                             other_outcome VARCHAR(100),
+                             reason_for_not_reporting VARCHAR(100),
+                             other_reason_for_not_reporting VARCHAR(100),
+                             date_created DATETIME NOT NULL,
+                             date_last_modified DATETIME,
+                             voided INT(11),
+                             CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
+                             CONSTRAINT unique_uuid UNIQUE(uuid),
+                             INDEX(visit_date),
+                             INDEX(encounter_id),
+                             INDEX(client_id)
+                           );
+                       SELECT "Successfully created etl_gender_based_violence table";
+
+
+
+ -- -------------- create table etl_alcohol_screening ----------------------------
+
+                     CREATE TABLE kp_etl.etl_alcohol_screening (
+                          uuid char(38) ,
+                                client_id INT(11) NOT NULL,
+                                visit_id INT(11) DEFAULT NULL,
+                                visit_date DATE,
+                                location_id INT(11) DEFAULT NULL,
+                                encounter_id INT(11) NOT NULL PRIMARY KEY,
+                                encounter_provider INT(11),
+                                date_created DATE,
+                          how_often_do_you_drink VARCHAR(10),
+                          how_many_drinks_you_take VARCHAR(10),
+                          how_often_do_you_drink_six_or_more VARCHAR(10),
+                          how_often_you_cant_stop_once_started VARCHAR(10),
+                          how_often_you_failed_task_due_to_drinking VARCHAR(10),
+                          how_often_you_needed_first_drink VARCHAR(10),
+                          how_often_have_you_felt_guilt VARCHAR(10),
+                          not_able_to_remember_becouse_of_drink VARCHAR(10),
+                          injury_as_a_result_of_drinking VARCHAR(10),
+                          people_concerned_about_your_drinking VARCHAR(20),
+                          total INT(10),
+                          remarks VARCHAR(100),
+                          voided INT(11),
+                          CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
+                          CONSTRAINT unique_uuid UNIQUE(uuid),
+                          INDEX(visit_date),
+                          INDEX(encounter_id),
+                          INDEX(client_id)
+                        );
+                      SELECT "Successfully created etl_alcohol_screening table";
+              -- -------------- create table etl_peer_overdose_reporting ----------------------------
+
+                  CREATE TABLE kp_etl.etl_peer_overdose_reporting (
+                   uuid char(38) ,
+                         client_id INT(11) NOT NULL,
+                         visit_id INT(11) DEFAULT NULL,
+                         visit_date DATE,
+                         location_id INT(11) DEFAULT NULL,
+                         encounter_id INT(11) NOT NULL PRIMARY KEY,
+                         encounter_provider INT(11),
+                         date_created DATE,
+                     address_overdose_happened VARCHAR(250),
+                    incident_type VARCHAR(10),
+                    hotspot VARCHAR(10),
+                    type_of_site VARCHAR(10),
+                    naloxone_provided VARCHAR(10),
+                    specific_drug_use VARCHAR(200),
+                    outcome VARCHAR(10),
+                    reported_by VARCHAR(10),
+                     reported_date DATETIME,
+                     witnessed_by VARCHAR(10),
+                     witnessed_date DATETIME,
+                     remarks VARCHAR(100),
+                    voided INT(11),
+                    CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
+                    CONSTRAINT unique_uuid UNIQUE(uuid),
+                    INDEX(visit_date),
+                    INDEX(encounter_id),
+                    INDEX(client_id)
+                  );
+                  SELECT "Successfully created etl_peer_overdose_reporting table";
+
+            -- -------------- create table etl_CHW_overdose_reporting ----------------------------
+
+                CREATE TABLE kp_etl.etl_CHW_overdose_reporting (
+                  uuid char(38) ,
+                        client_id INT(11) NOT NULL,
+                        visit_id INT(11) DEFAULT NULL,
+                        visit_date DATE,
+                        location_id INT(11) DEFAULT NULL,
+                        encounter_id INT(11) NOT NULL PRIMARY KEY,
+                        encounter_provider INT(11),
+                        date_created DATE,
+                  address_overdose_happened VARCHAR(250),
+                  incident_type VARCHAR(10),
+                  hotspot VARCHAR(10),
+                  type_of_site VARCHAR(10),
+                  naloxone_provided VARCHAR(10),
+                  specific_drug_use VARCHAR(200),
+                  outcome VARCHAR(10),
+                  reported_by VARCHAR(10),
+                  reported_date DATETIME,
+                  witnessed_by VARCHAR(10),
+                  witnessed_date DATETIME,
+                  remarks VARCHAR(100),
+                  voided INT(11),
+                  CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
+                  CONSTRAINT unique_uuid UNIQUE(uuid),
+                  INDEX(visit_date),
+                  INDEX(encounter_id),
+                  INDEX(client_id)
+                );
+                SELECT "Successfully created etl_CHW_overdose_reporting table";
+
+
+   -- -------------- create table etl_diagnosis ----------------------------
+                  CREATE TABLE kp_etl.etl_diagnosis (
+                       uuid char(38) ,
+                         client_id INT(11) NOT NULL,
+                         visit_id INT(11) DEFAULT NULL,
+                         visit_date DATE,
+                         location_id INT(11) DEFAULT NULL,
+                         encounter_id INT(11) NOT NULL PRIMARY KEY,
+                         encounter_provider INT(11),
+                         date_created DATE,
+                          skin_findings VARCHAR(100),
+                        skin_finding_notes VARCHAR(250),
+                         eyes_findings VARCHAR(100),
+                        eyes_finding_notes VARCHAR(250),
+                         ent_findings VARCHAR(100),
+                        ent_finding_notes VARCHAR(250),
+                          chest_findings VARCHAR(100),
+                        chest_finding_notes VARCHAR(250),
+                         cvs_findings VARCHAR(100),
+                        cvs_finding_notes VARCHAR(250),
+                         abdomen_findings VARCHAR(100),
+                        abdomen_finding_notes VARCHAR(250),
+                         cns_findings VARCHAR(100),
+                        cns_finding_notes VARCHAR(250),
+                         genitourinary_findings VARCHAR(100),
+                        genitourinary_finding_notes VARCHAR(250),
+                        diagnosis VARCHAR(10),
+                         clinical_notes VARCHAR(100),
+                        voided INT(11),
+                        CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
+                        CONSTRAINT unique_uuid UNIQUE(uuid),
+                        INDEX(visit_date),
+                        INDEX(encounter_id),
+                        INDEX(client_id)
+                      );
+                     SELECT "Successfully created etl_diagnosis table";
+
+
+
+               -- ------------ create table etl_patient_triage-----------------------
+
+               CREATE TABLE kp_etl.etl_patient_triage (
+                      uuid char(38) ,
+                     client_id INT(11) NOT NULL,
+                     visit_id INT(11) DEFAULT NULL,
+                     visit_date DATE,
+                     location_id INT(11) DEFAULT NULL,
+                     encounter_id INT(11) NOT NULL PRIMARY KEY,
+                     encounter_provider INT(11),
+                     date_created DATE,
+                   visit_reason VARCHAR(255),
+                   weight DOUBLE,
+                   height DOUBLE,
+                   systolic_pressure DOUBLE,
+                   diastolic_pressure DOUBLE,
+                   temperature DOUBLE,
+                   pulse_rate DOUBLE,
+                   respiratory_rate DOUBLE,
+                   oxygen_saturation DOUBLE,
+                   muac DOUBLE,
+                   nutritional_status INT(11) DEFAULT NULL,
+                   last_menstrual_period DATE,
+                   date_last_modified DATETIME,
+                   voided INT(11),
+                   CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
+                    CONSTRAINT unique_uuid UNIQUE(uuid),
+                                            INDEX(visit_date),
+                                            INDEX(encounter_id),
+                                            INDEX(client_id)
+                 );
+
+                  SELECT "Successfully created etl_patient_triage table";
 END$$
