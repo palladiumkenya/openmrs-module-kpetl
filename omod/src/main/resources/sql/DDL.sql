@@ -268,7 +268,7 @@ CREATE PROCEDURE create_etl_tables()
       clinical_notes VARCHAR(255),
       appointment_date DATE,
       voided INT(11),
-      constraint foreign key(client_id) references kp_etl.etl_client_registration(client_id),
+      -- constraint foreign key(client_id) references kp_etl.etl_client_registration(client_id),
       CONSTRAINT unique_uuid UNIQUE(uuid),
       index(client_id),
       index(client_id,visit_date)
