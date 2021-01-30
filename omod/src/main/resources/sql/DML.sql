@@ -1460,6 +1460,49 @@ END$$
 
 
 
+DROP PROCEDURE IF EXISTS sp_populate_program_discontinuation$$
+CREATE PROCEDURE sp_populate_program_discontinuation()
+BEGIN
+SELECT "Processing program discontinuation";
+INSERT INTO kp_etl.etl_program_discontinuation(
+encounter_id,
+client_id,
+location_id,
+visit_date,
+visit_id,
+encounter_provider,
+date_created,
+reason,
+date_of_death,
+transfer_facility,
+date_transferred_out,
+voided
+)
+select
+e.encounter_id,
+e.patient_id as client_id,
+e.location_id,
+e.encounter_datetime as visit_date,
+e.visit_id,
+e.creator,
+e.date_created,
+max(if(o.concept_id=161555,o.value_coded,null)) as reason,
+max(if(o.concept_id=1543,o.value_datetime,null)) as date_of_death,
+max(if(o.concept_id=159495,o.value_text,null)) as transfer_facility,
+max(if(o.concept_id=160649,o.value_datetime,null)) as date_transferred_out,
+e.voided
+from encounter e
+   inner join
+     (
+     select encounter_type_id, uuid, name from encounter_type where uuid ='d7142400-2495-11e9-ab14-d663bd873d93'
+     ) et on et.encounter_type_id=e.encounter_type
+   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                              and o.concept_id in (161555,1543,159495,160649)
+                  where e.voided=0
+group by e.patient_id, e.encounter_id, visit_date;
+SELECT "Completed processing program discontinuation";
+END$$
+
 SET sql_mode=@OLD_SQL_MODE$$
 -- ------------------------------------------- running all procedures -----------------------------
 
@@ -1479,6 +1522,7 @@ CALL sp_populate_etl_sti_treatment();
 CALL sp_populate_etl_peer_calendar();
 CALL sp_populate_hts_test();
 CALL sp_populate_violence_screening();
+CALL sp_populate_program_discontinuation();
 CALL sp_populate_etl_peer_tracking();
 CALL sp_populate_etl_referral();
 CALL sp_populate_etl_alcohol_screening();
@@ -1492,6 +1536,3 @@ UPDATE kp_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id
 SELECT "Completed first time setup", CONCAT("Time: ", NOW());
 
 END$$
-
-
-
