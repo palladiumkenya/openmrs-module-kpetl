@@ -637,94 +637,154 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                     SELECT "Completed processing STI Treatment data ", CONCAT("Time: ", NOW());
 
            END$$
-            -- ------------- populate etl_peer_calendar--------------------------------
 
-                DROP PROCEDURE IF EXISTS sp_populate_etl_peer_calendar$$
-                CREATE PROCEDURE sp_populate_etl_peer_calendar()
-                  BEGIN
-                    SELECT "Processing Peer calendar ", CONCAT("Time: ", NOW());
-                    INSERT INTO  kp_etl.etl_peer_calendar(
-                        uuid,
-                        client_id,
-                        visit_id,
-                        visit_date,
-                        location_id,
-                        encounter_id,
-                        encounter_provider,
-                        date_created,
-                        hotspot_name,
-                        typology,
-                        other_hotspots,
-                        weekly_sex_acts,
-                        monthly_condoms_required,
-                        weekly_anal_sex_acts,
-                        monthly_lubes_required,
-                        daily_injections,
-                        monthly_syringes_required,
-                        years_in_sexwork_drugs,
-                        experienced_violence,
-                        service_provided_within_last_month,
-                        monthly_n_and_s_distributed,
-                        monthly_male_condoms_distributed,
-                        monthly_lubes_distributed,
-                        monthly_female_condoms_distributed,
-                        monthly_self_test_kits_distributed,
-                        received_clinical_service,
-                        violence_reported,
-                        referred,
-                        health_edu,
-                        remarks,
-                        voided
-                        )
-                    select
-                           e.uuid,
-                           e.patient_id,
-                           e.visit_id,
-                           (e.encounter_datetime) as visit_date,
-                           e.location_id,
-                           e.encounter_id as encounter_id,
-                           e.creator,
-                           e.date_created as date_created,
-                           max(if(o.concept_id=165006,o.value_text,null)) as hotspot_name,
-                           max(if(o.concept_id=165005,(case o.value_coded when  165011 then "Street" when  165012 then" Injecting den" when  165013 then" Uninhabitable building"
-                                                                          when  165014 then" Park" when  1536 then" Homes" when  165015 then" Beach" when  165016 then" Casino"
-                                                                          when  165017 then "Bar with lodging" when  165018 then "Bar without lodging"
-                                                                          when  165019 then "Sex den" when  165020 then "Strip club" when  165021 then "Highways" when  165022 then "Brothel"
-                                                                          when  165023 then "Guest house/Hotels/Lodgings" when 165024 then "Massage parlor" when 165025 then "Chang’aa den" when 165026 then "Barbershop/Salon"
-                                                                          when  165297 then "Virtual Space" when  5622 then "Other (Specify)" else "" end),null)) as typology,
-                           max(if(o.concept_id=165298,o.value_text,null)) as other_hotspots,
-                           max(if(o.concept_id=165007,o.value_numeric,null)) as weekly_sex_acts,
-                           max(if(o.concept_id=165299,o.value_numeric,null)) as monthly_condoms_required,
-                           max(if(o.concept_id=165008,o.value_numeric,null)) as weekly_anal_sex_acts,
-                           max(if(o.concept_id=165300,o.value_numeric,null)) as monthly_lubes_required,
-                           max(if(o.concept_id=165009,o.value_numeric,null)) as daily_injections,
-                           max(if(o.concept_id=165308,o.value_numeric,null)) as monthly_syringes_required,
-                           max(if(o.concept_id=165301,o.value_numeric,null)) as years_in_sexwork_drugs,
-                           max(if(o.concept_id=123160,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as experienced_violence,
-                           max(if(o.concept_id=165302,(case o.value_coded when 159777 then "Condoms" when 165303 then "Needles and Syringes" when 165004 then "Contact" when 161643 THEN "Visited Clinic" else "" end),null)) as service_provided_within_last_month,
-                           max(if(o.concept_id=165341,o.value_numeric,null)) as monthly_n_and_s_distributed,
-                           max(if(o.concept_id=165343,o.value_numeric,null)) as monthly_male_condoms_distributed,
-                           max(if(o.concept_id=165057,o.value_numeric,null)) as monthly_lubes_distributed,
-                           max(if(o.concept_id=165344,o.value_numeric,null)) as monthly_female_condoms_distributed,
-                           max(if(o.concept_id=165345,o.value_numeric,null)) as monthly_self_test_kits_distributed,
-                           max(if(o.concept_id=1774,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as received_clinical_service,
-                           max(if(o.concept_id=165272,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as violence_reported,
-                           max(if(o.concept_id=1749,o.value_numeric,null)) as referred,
-                           max(if(o.concept_id=165346,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as health_edu,
-                           max(if(o.concept_id=160632,o.value_text,null)) as remarks,
-                           e.voided as voided
-                    from encounter e
-                           inner join
-                             (
-                             select encounter_type_id, uuid, name from encounter_type where uuid in('c4f9db39-2c18-49a6-bf9b-b243d673c64d')
-                             ) et on et.encounter_type_id=e.encounter_type
-                           left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                                      and o.concept_id in (165006,165005,165298,165007,165299,165008,165301,165302,165341,165343,165057,165344,165345,
-                                                      1774,123160,1749,165346,160632,165272)
-                                          where e.voided=0
-                    group by e.patient_id, e.encounter_id, visit_date;
-                    SELECT "Completed processing Peer calendar data ", CONCAT("Time: ", NOW());
-                    END$$
+-- ------------- populate etl_peer_calendar--------------------------------
+
+                     DROP PROCEDURE IF EXISTS sp_populate_etl_peer_calendar$$
+                     CREATE PROCEDURE sp_populate_etl_peer_calendar()
+                       BEGIN
+                         SELECT "Processing Peer calendar ", CONCAT("Time: ", NOW());
+                         INSERT INTO  kp_etl.etl_peer_calendar(
+                             uuid,
+                             client_id,
+                             visit_id,
+                             visit_date,
+                             location_id,
+                             encounter_id,
+                             encounter_provider,
+                             date_created,
+                             hotspot_name,
+                             typology,
+                             other_hotspots,
+                             weekly_sex_acts,
+                             monthly_condoms_required,
+                             weekly_anal_sex_acts,
+                             monthly_lubes_required,
+                             daily_injections,
+                             monthly_syringes_required,
+                             years_in_sexwork_drugs,
+                             experienced_violence,
+                             service_provided_within_last_month,
+
+                             week_1_monthly_n_and_s_distributed,
+                             week_1_monthly_male_condoms_distributed,
+                             week_1_monthly_lubes_distributed,
+                             week_1_monthly_female_condoms_distributed,
+                             week_1_monthly_self_test_kits_distributed,
+                             week_1_received_clinical_service,
+                             week_1_violence_reported,
+                             week_1_referred,
+                             week_1_health_edu,
+
+                            week_2_monthly_n_and_s_distributed,
+                             week_2_monthly_male_condoms_distributed,
+                             week_2_monthly_lubes_distributed,
+                             week_2_monthly_female_condoms_distributed,
+                             week_2_monthly_self_test_kits_distributed,
+                             week_2_received_clinical_service,
+                             week_2_violence_reported,
+                             week_2_referred,
+                             week_2_health_edu,
+
+                            week_3_monthly_n_and_s_distributed,
+                             week_3_monthly_male_condoms_distributed,
+                             week_3_monthly_lubes_distributed,
+                             week_3_monthly_female_condoms_distributed,
+                             week_3_monthly_self_test_kits_distributed,
+                             week_3_received_clinical_service,
+                             week_3_violence_reported,
+                             week_3_referred,
+                             week_3_health_edu,
+
+                            week_4_monthly_n_and_s_distributed,
+                             week_4_monthly_male_condoms_distributed,
+                             week_4_monthly_lubes_distributed,
+                             week_4_monthly_female_condoms_distributed,
+                             week_4_monthly_self_test_kits_distributed,
+                             week_4_received_clinical_service,
+                             week_4_violence_reported,
+                             week_4_referred,
+                             week_4_health_edu,
+
+                             remarks,
+                             voided
+                             )
+                         select
+                                e.uuid,
+                                e.patient_id,
+                                e.visit_id,
+                                (e.encounter_datetime) as visit_date,
+                                e.location_id,
+                                e.encounter_id as encounter_id,
+                                e.creator,
+                                e.date_created as date_created,
+                                max(if(o.concept_id=165006,o.value_text,null)) as hotspot_name,
+                                max(if(o.concept_id=165005,o.value_coded,null)) as typology,
+                                max(if(o.concept_id=165298,o.value_text,null)) as other_hotspots,
+                                max(if(o.concept_id=165007,o.value_numeric,null)) as weekly_sex_acts,
+                                max(if(o.concept_id=165299,o.value_numeric,null)) as monthly_condoms_required,
+                                max(if(o.concept_id=165008,o.value_numeric,null)) as weekly_anal_sex_acts,
+                                max(if(o.concept_id=165300,o.value_numeric,null)) as monthly_lubes_required,
+                                max(if(o.concept_id=165009,o.value_numeric,null)) as daily_injections,
+                                max(if(o.concept_id=165308,o.value_numeric,null)) as monthly_syringes_required,
+                                max(if(o.concept_id=165301,o.value_numeric,null)) as years_in_sexwork_drugs,
+                                max(if(o.concept_id=123160,o.value_coded,null)) as experienced_violence,
+                                max(if(o.concept_id=165302,o.value_coded,null)) as service_provided_within_last_month,
+
+                                max(if(o.concept_id=165304 and o.value_coded=165058,value_coded,null)) as week_1_monthly_n_and_s_distributed,
+                               max(if(o.concept_id=165304 and o.value_coded=165055,value_coded,null)) as week_1_monthly_male_condoms_distributed,
+                               max(if(o.concept_id=165304 and o.value_coded=165057,value_coded,null)) as week_1_monthly_lubes_distributed,
+                               max(if(o.concept_id=165304 and o.value_coded=165056,value_coded,null)) as week_1_monthly_female_condoms_distributed,
+                               max(if(o.concept_id=165304 and o.value_coded=165222,value_coded,null)) as week_1_monthly_self_test_kits_distributed,
+                               max(if(o.concept_id=165304 and o.value_coded=1774,value_coded,null)) as week_1_received_clinical_service,
+                               max(if(o.concept_id=165304 and o.value_coded=1774,value_coded,null)) as week_1_violence_reported,
+                               max(if(o.concept_id=165304 and o.value_coded=1272,value_coded,null)) as week_1_referred,
+                               max(if(o.concept_id=165304 and o.value_coded=165147,value_coded,null)) as week_1_health_edu,
+
+                               max(if(o.concept_id=165305 and o.value_coded=165058,value_coded,null)) as week_2_monthly_n_and_s_distributed,
+                               max(if(o.concept_id=165305 and o.value_coded=165055,value_coded,null)) as week_2_monthly_male_condoms_distributed,
+                               max(if(o.concept_id=165305 and o.value_coded=165057,value_coded,null)) as week_2_monthly_lubes_distributed,
+                               max(if(o.concept_id=165305 and o.value_coded=165056,value_coded,null)) as week_2_monthly_female_condoms_distributed,
+                               max(if(o.concept_id=165305 and o.value_coded=165222,value_coded,null)) as week_2_monthly_self_test_kits_distributed,
+                               max(if(o.concept_id=165305 and o.value_coded=1774,value_coded,null)) as week_2_received_clinical_service,
+                               max(if(o.concept_id=165305 and o.value_coded=1774,value_coded,null)) as week_2_violence_reported,
+                               max(if(o.concept_id=165305 and o.value_coded=1272,value_coded,null)) as week_2_referred,
+                               max(if(o.concept_id=165305 and o.value_coded=165147,value_coded,null)) as week_2_health_edu,
+
+                               max(if(o.concept_id=165306 and o.value_coded=165058,value_coded,null)) as week_3_monthly_n_and_s_distributed,
+                               max(if(o.concept_id=165306 and o.value_coded=165055,value_coded,null)) as week_3_monthly_male_condoms_distributed,
+                               max(if(o.concept_id=165306 and o.value_coded=165057,value_coded,null)) as week_3_monthly_lubes_distributed,
+                               max(if(o.concept_id=165306 and o.value_coded=165056,value_coded,null)) as week_3_monthly_female_condoms_distributed,
+                               max(if(o.concept_id=165306 and o.value_coded=165222,value_coded,null)) as week_3_monthly_self_test_kits_distributed,
+                               max(if(o.concept_id=165306 and o.value_coded=1774,value_coded,null)) as week_3_received_clinical_service,
+                               max(if(o.concept_id=165306 and o.value_coded=1774,value_coded,null)) as week_3_violence_reported,
+                               max(if(o.concept_id=165306 and o.value_coded=1272,value_coded,null)) as week_3_referred,
+                               max(if(o.concept_id=165306 and o.value_coded=165147,value_coded,null)) as week_3_health_edu,
+
+                               max(if(o.concept_id=165307 and o.value_coded=165058,value_coded,null)) as week_4_monthly_n_and_s_distributed,
+                               max(if(o.concept_id=165307 and o.value_coded=165055,value_coded,null)) as week_4_monthly_male_condoms_distributed,
+                               max(if(o.concept_id=165307 and o.value_coded=165057,value_coded,null)) as week_4_monthly_lubes_distributed,
+                               max(if(o.concept_id=165307 and o.value_coded=165056,value_coded,null)) as week_4_monthly_female_condoms_distributed,
+                               max(if(o.concept_id=165307 and o.value_coded=165222,value_coded,null)) as week_4_monthly_self_test_kits_distributed,
+                               max(if(o.concept_id=165307 and o.value_coded=1774,value_coded,null)) as week_4_received_clinical_service,
+                               max(if(o.concept_id=165307 and o.value_coded=1774,value_coded,null)) as week_4_violence_reported,
+                               max(if(o.concept_id=165307 and o.value_coded=1272,value_coded,null)) as week_4_referred,
+                               max(if(o.concept_id=165307 and o.value_coded=165147,value_coded,null)) as week_4_health_edu,
+
+                             max(if(o.concept_id=160632,o.value_text,null)) as remarks,
+                                e.voided as voided
+                         from encounter e
+                                inner join
+                                  (
+                                  select encounter_type_id, uuid, name from encounter_type where uuid in('c4f9db39-2c18-49a6-bf9b-b243d673c64d')
+                                  ) et on et.encounter_type_id=e.encounter_type
+                                left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                           and o.concept_id in (165304,165305,165306,165307,165006,165005,165298,165007,165299,165008,165301,165302,165341,165343,165057,165344,165345,
+                                                           1774,123160,1749,165346,160632,165272)
+                                               where e.voided=0
+                         group by e.patient_id, e.encounter_id, visit_date;
+                         SELECT "Completed processing Peer calendar data ", CONCAT("Time: ", NOW());
+                         END$$
 
 -- ------------------------------------ populate hts test table ----------------------------------------
 
