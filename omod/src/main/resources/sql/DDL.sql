@@ -37,7 +37,7 @@ CREATE PROCEDURE create_etl_tables()
     DROP TABLE IF EXISTS kp_etl.etl_diagnosis;
     DROP TABLE IF EXISTS kp_etl.etl_peer_tracking;
     DROP TABLE IF EXISTS kp_etl.etl_gender_based_violence;
-    DROP TABLE IF EXISTS kp_etl.sp_populate_etl_depression_screening;
+    DROP TABLE IF EXISTS kp_etl.etl_depression_screening;
 
 
 
@@ -795,7 +795,7 @@ index(test_2_kit_name)
                                          encounter_id INT(11) NOT NULL PRIMARY KEY,
                                          encounter_provider INT(11),
                                          date_created DATE,
-                                         PHQ-9_rating VARCHAR(100),
+                                         phq_9_rating VARCHAR(100),
                                          voided INT(11),
                                          CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
                                          CONSTRAINT unique_uuid UNIQUE(uuid),
