@@ -37,6 +37,9 @@ CREATE PROCEDURE create_etl_tables()
     DROP TABLE IF EXISTS kp_etl.etl_diagnosis;
     DROP TABLE IF EXISTS kp_etl.etl_peer_tracking;
     DROP TABLE IF EXISTS kp_etl.etl_gender_based_violence;
+    DROP TABLE IF EXISTS kp_etl.sp_populate_etl_depression_screening;
+
+
 
     -- create table etl_client_registration
     create table kp_etl.etl_client_registration (
@@ -781,4 +784,24 @@ index(test_2_kit_name)
                  );
 
                   SELECT "Successfully created etl_patient_triage table";
+
+                     -- -------------- create table etl_depression_screening ----------------------------
+                                    CREATE TABLE kp_etl.etl_depression_screening (
+                                         uuid char(38) ,
+                                         client_id INT(11) NOT NULL,
+                                         visit_id INT(11) DEFAULT NULL,
+                                         visit_date DATE,
+                                         location_id INT(11) DEFAULT NULL,
+                                         encounter_id INT(11) NOT NULL PRIMARY KEY,
+                                         encounter_provider INT(11),
+                                         date_created DATE,
+                                         PHQ-9_rating VARCHAR(100),
+                                         voided INT(11),
+                                         CONSTRAINT FOREIGN KEY (client_id) REFERENCES kp_etl.etl_client_registration(client_id),
+                                         CONSTRAINT unique_uuid UNIQUE(uuid),
+                                         INDEX(visit_date),
+                                         INDEX(encounter_id),
+                                         INDEX(client_id)
+                                        );
+                                       SELECT "Successfully created etl_depression_screening table";
 END$$
