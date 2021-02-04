@@ -1516,6 +1516,47 @@ END$$
                 SELECT "Completed processing diagnosis data ", CONCAT("Time: ", NOW());
                 END$$
 
+                 -- ------------- populate etl_depression_screening--------------------------------
+
+                                DROP PROCEDURE IF EXISTS sp_populate_etl_depression_screening$$
+                                CREATE PROCEDURE sp_populate_etl_depression_screening()
+                                  BEGIN
+                                    SELECT "Processing depression screening", CONCAT("Time: ", NOW());
+                                    INSERT INTO  kp_etl.etl_depression_screening(
+                                        uuid,
+                                        client_id,
+                                        visit_id,
+                                        visit_date,
+                                        location_id,
+                                        encounter_id,
+                                        encounter_provider,
+                                        date_created,
+                                        phq_9_rating,
+                                        voided
+                                        )
+                                    select
+                                           e.uuid,
+                                           e.patient_id,
+                                           e.visit_id,
+                                           (e.encounter_datetime) as visit_date,
+                                           e.location_id,
+                                           e.encounter_id as encounter_id,
+                                           e.creator,
+                                           e.date_created as date_created,
+                                           max(if(o.concept_id=165110, o.value_coded ,null)) as phq_9_rating,
+                                           e.voided as voided
+                                           from encounter e
+                                           inner join
+                                             (
+                                             select encounter_type_id, uuid, name from encounter_type where uuid in('84220f19-9071-4745-9045-3b2f8d3dc128')
+                                             ) et on et.encounter_type_id=e.encounter_type
+                                           left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+                                                                      and o.concept_id in (165110)
+                                                          where e.voided=0
+                                    group by e.patient_id, e.encounter_id, visit_date;
+                                    SELECT "Completed processing depression screening data ", CONCAT("Time: ", NOW());
+                                    END$$
+
 
 
 
@@ -1546,6 +1587,7 @@ CALL sp_populate_etl_peer_overdose_reporting();
 CALL sp_populate_etl_CHW_overdose_reporting();
 CALL sp_populate_etl_patient_triage();
 CALL sp_populate_etl_diagnosis();
+CALL sp_populate_etl_depression_screening();
 
 UPDATE kp_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
