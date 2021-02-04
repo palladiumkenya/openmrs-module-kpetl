@@ -1385,9 +1385,9 @@ END$$
                        max(if(o.concept_id=160632, o.value_text ,null)) as remarks,
                        max(if(o.concept_id=165141, o.value_coded ,null)) as outcome,
                        max(if(o.concept_id=1473, o.value_text ,null)) as reported_by,
-                       max(if(o.concept_id=165144, o.value_coded ,null)) as reported_date,
+                       max(if(o.concept_id=165144, o.value_datetime ,null)) as reported_date,
                        max(if(o.concept_id=165143,o.value_text,null)) as witnessed_by,
-                       max(if(o.concept_id=160753, o.value_coded ,null)) as witnessed_date,
+                       max(if(o.concept_id=160753, o.value_datetime ,null)) as witnessed_date,
                        e.voided as voided
                        from encounter e
                        inner join
