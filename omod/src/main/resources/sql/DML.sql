@@ -672,7 +672,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                              week_1_monthly_female_condoms_distributed,
                              week_1_monthly_self_test_kits_distributed,
                              week_1_received_clinical_service,
-                             week_1_violence_reported,
+                             -- week_1_violence_reported,
                              week_1_referred,
                              week_1_health_edu,
 
@@ -682,7 +682,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                              week_2_monthly_female_condoms_distributed,
                              week_2_monthly_self_test_kits_distributed,
                              week_2_received_clinical_service,
-                             week_2_violence_reported,
+                             -- week_2_violence_reported,
                              week_2_referred,
                              week_2_health_edu,
 
@@ -692,7 +692,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                              week_3_monthly_female_condoms_distributed,
                              week_3_monthly_self_test_kits_distributed,
                              week_3_received_clinical_service,
-                             week_3_violence_reported,
+                             -- week_3_violence_reported,
                              week_3_referred,
                              week_3_health_edu,
 
@@ -702,7 +702,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                              week_4_monthly_female_condoms_distributed,
                              week_4_monthly_self_test_kits_distributed,
                              week_4_received_clinical_service,
-                             week_4_violence_reported,
+                             -- week_4_violence_reported,
                              week_4_referred,
                              week_4_health_edu,
 
@@ -731,45 +731,46 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                                 max(if(o.concept_id=123160,o.value_coded,null)) as experienced_violence,
                                 max(if(o.concept_id=165302,o.value_coded,null)) as service_provided_within_last_month,
 
-                                max(if(o.concept_id=165304 and o.value_coded=165058,value_coded,null)) as week_1_monthly_n_and_s_distributed,
-                               max(if(o.concept_id=165304 and o.value_coded=165055,value_coded,null)) as week_1_monthly_male_condoms_distributed,
-                               max(if(o.concept_id=165304 and o.value_coded=165057,value_coded,null)) as week_1_monthly_lubes_distributed,
-                               max(if(o.concept_id=165304 and o.value_coded=165056,value_coded,null)) as week_1_monthly_female_condoms_distributed,
-                               max(if(o.concept_id=165304 and o.value_coded=165222,value_coded,null)) as week_1_monthly_self_test_kits_distributed,
-                               max(if(o.concept_id=165304 and o.value_coded=1774,value_coded,null)) as week_1_received_clinical_service,
-                               max(if(o.concept_id=165304 and o.value_coded=1774,value_coded,null)) as week_1_violence_reported,
-                               max(if(o.concept_id=165304 and o.value_coded=1272,value_coded,null)) as week_1_referred,
-                               max(if(o.concept_id=165304 and o.value_coded=165147,value_coded,null)) as week_1_health_edu,
+                                max(if(t.week_1 is not null, t.n_and_s_distributed, null)) as week_1_monthly_n_and_s_distributed,
+                                max(if(t.week_1 is not null, t.male_condoms_distributed, null)) as week_1_monthly_male_condoms_distributed,
+                                max(if(t.week_1 is not null, t.lubes_distributed, null)) as week_1_monthly_lubes_distributed,
+                                max(if(t.week_1 is not null, t.female_condoms_distributed, null)) as week_1_monthly_female_condoms_distributed,
+                                max(if(t.week_1 is not null, t.self_test_kits_distributed, null)) as week_1_monthly_self_test_kits_distributed,
+                                max(if(t.week_1 is not null, t.received_clinical_service, null)) as week_1_received_clinical_service,
+                                -- max(if(t.week_1 is not null, t.violence_reported, null)) as week_1_violence_reported,
+                                max(if(t.week_1 is not null, t.referred, null)) as week_1_referred,
+                                max(if(t.week_1 is not null, t.health_edu, null)) as week_1_health_edu,
+                                
+                                max(if(t.week_2 is not null, t.n_and_s_distributed, null)) as week_2_monthly_n_and_s_distributed,
+                                max(if(t.week_2 is not null, t.male_condoms_distributed, null)) as week_2_monthly_male_condoms_distributed,
+                                max(if(t.week_2 is not null, t.lubes_distributed, null)) as week_2_monthly_lubes_distributed,
+                                max(if(t.week_2 is not null, t.female_condoms_distributed, null)) as week_2_monthly_female_condoms_distributed,
+                                max(if(t.week_2 is not null, t.self_test_kits_distributed, null)) as week_2_monthly_self_test_kits_distributed,
+                                max(if(t.week_2 is not null, t.received_clinical_service, null)) as week_2_received_clinical_service,
+                                -- max(if(t.week_2 is not null, t.violence_reported, null)) as week_2_violence_reported,
+                                max(if(t.week_2 is not null, t.referred, null)) as week_2_referred,
+                                max(if(t.week_2 is not null, t.health_edu, null)) as week_2_health_edu,
+                                
+                                max(if(t.week_3 is not null, t.n_and_s_distributed, null)) as week_3_monthly_n_and_s_distributed,
+                                max(if(t.week_3 is not null, t.male_condoms_distributed, null)) as week_3_monthly_male_condoms_distributed,
+                                max(if(t.week_3 is not null, t.lubes_distributed, null)) as week_3_monthly_lubes_distributed,
+                                max(if(t.week_3 is not null, t.female_condoms_distributed, null)) as week_3_monthly_female_condoms_distributed,
+                                max(if(t.week_3 is not null, t.self_test_kits_distributed, null)) as week_3_monthly_self_test_kits_distributed,
+                                max(if(t.week_3 is not null, t.received_clinical_service, null)) as week_3_received_clinical_service,
+                                -- max(if(t.week_3 is not null, t.violence_reported, null)) as week_3_violence_reported,
+                                max(if(t.week_3 is not null, t.referred, null)) as week_3_referred,
+                                max(if(t.week_3 is not null, t.health_edu, null)) as week_3_health_edu,
+                                
+                                max(if(t.week_4 is not null, t.n_and_s_distributed, null)) as week_4_monthly_n_and_s_distributed,
+                                max(if(t.week_4 is not null, t.male_condoms_distributed, null)) as week_4_monthly_male_condoms_distributed,
+                                max(if(t.week_4 is not null, t.lubes_distributed, null)) as week_4_monthly_lubes_distributed,
+                                max(if(t.week_4 is not null, t.female_condoms_distributed, null)) as week_4_monthly_female_condoms_distributed,
+                                max(if(t.week_4 is not null, t.self_test_kits_distributed, null)) as week_4_monthly_self_test_kits_distributed,
+                                max(if(t.week_4 is not null, t.received_clinical_service, null)) as week_4_received_clinical_service,
+                                -- max(if(t.week_4 is not null, t.violence_reported, null)) as week_4_violence_reported,
+                                max(if(t.week_4 is not null, t.referred, null)) as week_4_referred,
+                                max(if(t.week_4 is not null, t.health_edu, null)) as week_4_health_edu,
 
-                               max(if(o.concept_id=165305 and o.value_coded=165058,value_coded,null)) as week_2_monthly_n_and_s_distributed,
-                               max(if(o.concept_id=165305 and o.value_coded=165055,value_coded,null)) as week_2_monthly_male_condoms_distributed,
-                               max(if(o.concept_id=165305 and o.value_coded=165057,value_coded,null)) as week_2_monthly_lubes_distributed,
-                               max(if(o.concept_id=165305 and o.value_coded=165056,value_coded,null)) as week_2_monthly_female_condoms_distributed,
-                               max(if(o.concept_id=165305 and o.value_coded=165222,value_coded,null)) as week_2_monthly_self_test_kits_distributed,
-                               max(if(o.concept_id=165305 and o.value_coded=1774,value_coded,null)) as week_2_received_clinical_service,
-                               max(if(o.concept_id=165305 and o.value_coded=1774,value_coded,null)) as week_2_violence_reported,
-                               max(if(o.concept_id=165305 and o.value_coded=1272,value_coded,null)) as week_2_referred,
-                               max(if(o.concept_id=165305 and o.value_coded=165147,value_coded,null)) as week_2_health_edu,
-
-                               max(if(o.concept_id=165306 and o.value_coded=165058,value_coded,null)) as week_3_monthly_n_and_s_distributed,
-                               max(if(o.concept_id=165306 and o.value_coded=165055,value_coded,null)) as week_3_monthly_male_condoms_distributed,
-                               max(if(o.concept_id=165306 and o.value_coded=165057,value_coded,null)) as week_3_monthly_lubes_distributed,
-                               max(if(o.concept_id=165306 and o.value_coded=165056,value_coded,null)) as week_3_monthly_female_condoms_distributed,
-                               max(if(o.concept_id=165306 and o.value_coded=165222,value_coded,null)) as week_3_monthly_self_test_kits_distributed,
-                               max(if(o.concept_id=165306 and o.value_coded=1774,value_coded,null)) as week_3_received_clinical_service,
-                               max(if(o.concept_id=165306 and o.value_coded=1774,value_coded,null)) as week_3_violence_reported,
-                               max(if(o.concept_id=165306 and o.value_coded=1272,value_coded,null)) as week_3_referred,
-                               max(if(o.concept_id=165306 and o.value_coded=165147,value_coded,null)) as week_3_health_edu,
-
-                               max(if(o.concept_id=165307 and o.value_coded=165058,value_coded,null)) as week_4_monthly_n_and_s_distributed,
-                               max(if(o.concept_id=165307 and o.value_coded=165055,value_coded,null)) as week_4_monthly_male_condoms_distributed,
-                               max(if(o.concept_id=165307 and o.value_coded=165057,value_coded,null)) as week_4_monthly_lubes_distributed,
-                               max(if(o.concept_id=165307 and o.value_coded=165056,value_coded,null)) as week_4_monthly_female_condoms_distributed,
-                               max(if(o.concept_id=165307 and o.value_coded=165222,value_coded,null)) as week_4_monthly_self_test_kits_distributed,
-                               max(if(o.concept_id=165307 and o.value_coded=1774,value_coded,null)) as week_4_received_clinical_service,
-                               max(if(o.concept_id=165307 and o.value_coded=1774,value_coded,null)) as week_4_violence_reported,
-                               max(if(o.concept_id=165307 and o.value_coded=1272,value_coded,null)) as week_4_referred,
-                               max(if(o.concept_id=165307 and o.value_coded=165147,value_coded,null)) as week_4_health_edu,
 
                              max(if(o.concept_id=160632,o.value_text,null)) as remarks,
                                 e.voided as voided
@@ -781,7 +782,32 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                                 left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                                            and o.concept_id in (165304,165305,165306,165307,165006,165005,165298,165007,165299,165008,165301,165302,165341,165343,165057,165344,165345,
                                                            1774,123160,1749,165346,160632,165272)
-                                               where e.voided=0
+                                inner join(
+                                     select
+                                        o.person_id,
+                                        o.obs_id,
+                                        o.concept_id as obs_group,
+                                        o1.concept_id as concept_id,
+                                        o1.value_coded,
+                                        o1.value_numeric,
+                                        if(o.concept_id=165304,(case o.concept_id when 165304 then "week_1" else "" end),null) as week_1 ,
+                                        if(o.concept_id=165305,(case o.concept_id when 165305 then "week_2" else "" end),null) as week_2 ,
+                                        if(o.concept_id=165306,(case o.concept_id when 165306 then "week_3" else "" end),null) as week_3 ,
+                                        if(o.concept_id=165307,(case o.concept_id when 165307 then "week_4" else "" end),null) as week_4,
+
+                                        if(o1.concept_id=165058,o1.value_numeric,null) as n_and_s_distributed,
+                                        if(o1.concept_id=165055,o1.value_numeric,null) as male_condoms_distributed,
+                                        if(o1.concept_id=165057,o1.value_numeric,null) as lubes_distributed,
+                                        if(o1.concept_id=165056,o1.value_numeric,null) as female_condoms_distributed,
+                                        if(o1.concept_id=165222,o1.value_numeric,null) as self_test_kits_distributed,
+                                        if(o1.concept_id=1774,o1.value_coded,null) as received_clinical_service,
+                        #                 --max(if(o.concept_id=1774,o.value_coded,null)) as violence_reported ,
+                                         if(o1.concept_id=1272,o1.value_coded,null) as referred,
+                                         if(o1.concept_id=165147,o1.value_coded,null) as health_edu
+                                      from obs o join obs o1 on o.obs_id = o1.obs_group_id
+                                      where o1.concept_id in (165058,165055,165057,165056,165222,1774,1272,165147)
+                                        )t
+                         where e.voided=0
                          group by e.patient_id, e.encounter_id, visit_date;
                          SELECT "Completed processing Peer calendar data ", CONCAT("Time: ", NOW());
                          END$$
