@@ -38,6 +38,7 @@ CREATE PROCEDURE create_etl_tables()
     DROP TABLE IF EXISTS kp_etl.etl_peer_tracking;
     DROP TABLE IF EXISTS kp_etl.etl_gender_based_violence;
     DROP TABLE IF EXISTS kp_etl.etl_depression_screening;
+    DROP TABLE IF EXISTS kp_etl.etl_person_relationship;
 
     -- create table etl_client_registration
     create table kp_etl.etl_client_registration (
@@ -803,5 +804,38 @@ index(test_2_kit_name)
                             );
                            SELECT "Successfully created etl_depression_screening table";
 
+ -- -------------- create table etl_person_relationship ----------------------------
+                        CREATE TABLE kp_etl.etl_person_relationship (
+                             uuid char(38) ,
+                             person_a INT(11) NOT NULL,
+                             relationship INT(11) NOT NULL,
+                             person_b INT(11) NOT NULL,
+                             creator INT(11) DEFAULT NULL,
+                             start_date DATE,
+                             end_date DATE,
+                             date_created DATE,
+                             voided INT(11),
+                             CONSTRAINT FOREIGN KEY (person_a) REFERENCES kp_etl.etl_client_registration(client_id),
+                             CONSTRAINT unique_uuid UNIQUE(uuid),
+                             INDEX(start_date),
+                             INDEX(person_a)
+                            );
+                           SELECT "Successfully created etl_person_relationship table";
+
+ -- -------------- create table etl_users ----------------------------
+                        CREATE TABLE kp_etl.etl_users (
+                             uuid char(38) ,
+                             person_id INT(11),
+                             user_id   INT(11),
+                             system_id VARCHAR(100),
+                             username VARCHAR(100),
+                             creator INT(11) DEFAULT NULL,
+                             date_created DATE,
+                             retired INT(11),
+                             CONSTRAINT FOREIGN KEY (person_id) REFERENCES kp_etl.etl_client_registration(client_id),
+                             CONSTRAINT unique_uuid UNIQUE(uuid),
+                             INDEX(person_id)
+                            );
+                           SELECT "Successfully created etl_users table";
 
 END$$

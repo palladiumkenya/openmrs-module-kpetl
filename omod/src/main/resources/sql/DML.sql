@@ -1143,7 +1143,7 @@ END$$
                       max(if(o.concept_id=160716,o.value_text,null)) as voluntary_exit_comment,
                       max(if(o.concept_id=161641, o.value_coded,null)) as status_in_program,
                       max(if(o.concept_id=162568, o.value_coded ,null)) as source_of_information,
-                      max(if(o.concept_id=160632, o.value_coded ,null)) as other_informant,
+                      max(if(o.concept_id=160632, o.value_text ,null)) as other_informant,
      				 e.date_created as date_last_modified,
                       e.voided as voided
                       from encounter e
@@ -1289,7 +1289,6 @@ END$$
                 encounter_id,
                 encounter_provider,
                 date_created,
-
                 address_overdose_happened,
                 incident_type,
                 hotspot,
@@ -1319,17 +1318,17 @@ END$$
                    max(if(o.concept_id=165005, o.value_coded ,null)) as type_of_site ,
                    max(if(o.concept_id=165136, o.value_coded ,null)) as naloxone_provided,
                    max(if(o.concept_id=1193, o.value_coded ,null)) as specific_drug_use,
-                   max(if(o.concept_id=160632, o.value_text ,null)) as remarks,
                    max(if(o.concept_id=165141, o.value_coded ,null)) as outcome,
                    max(if(o.concept_id=1473, o.value_text ,null)) as reported_by,
                    max(if(o.concept_id=165144, o.value_datetime ,null)) as reported_date,
                    max(if(o.concept_id=165143,o.value_text,null)) as witnessed_by,
                    max(if(o.concept_id=160753, o.value_datetime ,null)) as witnessed_date,
+                   max(if(o.concept_id=160632, o.value_text ,null)) as remarks,
                    e.voided as voided
                    from encounter e
                    inner join
                      (
-                     select encounter_type_id, uuid, name from encounter_type where uuid in('c3fb7831-f8fc-4b71-bd54-f23cdd77e305')
+                     select encounter_type_id, uuid, name from encounter_type where uuid in('383974fe-58ef-488f-bdff-8962f4dd7518')
                      ) et on et.encounter_type_id=e.encounter_type
                    left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                               and o.concept_id in (162725,165133,165006,165005,165136,1193,160632,165141,1473,165144,165143,160753)
@@ -1352,7 +1351,6 @@ END$$
                     encounter_id,
                     encounter_provider,
                     date_created,
-
                     address_overdose_happened,
                     incident_type,
                     hotspot,
@@ -1382,17 +1380,17 @@ END$$
                        max(if(o.concept_id=165005, o.value_coded ,null)) as type_of_site ,
                        max(if(o.concept_id=165136, o.value_coded ,null)) as naloxone_provided,
                        max(if(o.concept_id=1193, o.value_coded ,null)) as specific_drug_use,
-                       max(if(o.concept_id=160632, o.value_text ,null)) as remarks,
                        max(if(o.concept_id=165141, o.value_coded ,null)) as outcome,
                        max(if(o.concept_id=1473, o.value_text ,null)) as reported_by,
                        max(if(o.concept_id=165144, o.value_datetime ,null)) as reported_date,
                        max(if(o.concept_id=165143,o.value_text,null)) as witnessed_by,
                        max(if(o.concept_id=160753, o.value_datetime ,null)) as witnessed_date,
+                       max(if(o.concept_id=160632, o.value_text ,null)) as remarks,
                        e.voided as voided
                        from encounter e
                        inner join
                          (
-                         select encounter_type_id, uuid, name from encounter_type where uuid in('383974fe-58ef-488f-bdff-8962f4dd7518')
+                         select encounter_type_id, uuid, name from encounter_type where uuid in('bd64b3b0-7bc9-4541-a813-8a917f623e2e')
                          ) et on et.encounter_type_id=e.encounter_type
                        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                                   and o.concept_id in (162725,165133,165006,165005,165136,1193,160632,165141,1473,165144,165143,160753)
@@ -1583,7 +1581,66 @@ END$$
                                     SELECT "Completed processing depression screening data ", CONCAT("Time: ", NOW());
                                     END$$
 
+        -- ------------- populate etl_person_relationship--------------------------------
 
+                                DROP PROCEDURE IF EXISTS sp_populate_etl_person_relationship$$
+                                CREATE PROCEDURE sp_populate_etl_person_relationship()
+                                  BEGIN
+                                    SELECT "Processing person relationship", CONCAT("Time: ", NOW());
+                                    INSERT INTO  kp_etl.etl_person_relationship(
+                                            uuid,
+                                           person_a,
+                                           relationship,
+                                           person_b,
+                                           creator,
+                                           start_date,
+                                           end_date,
+                                           date_created,
+                                           voided
+                                        )
+                                    select
+                                           uuid,
+                                           person_a,
+                                           relationship,
+                                           person_b,
+                                           creator,
+                                           start_date,
+                                           end_date,
+                                           date_created,
+                                           voided
+                                           from relationship
+                                                          where voided=0;
+                                    SELECT "Completed processing person relationship data ", CONCAT("Time: ", NOW());
+                                    END$$
+
+   -- ------------- populate etl_users--------------------------------
+
+                                DROP PROCEDURE IF EXISTS sp_populate_etl_users$$
+                                CREATE PROCEDURE sp_populate_etl_users()
+                                  BEGIN
+                                    SELECT "Processing users", CONCAT("Time: ", NOW());
+                                    INSERT INTO  kp_etl.etl_users(
+                                            uuid,
+                                            person_id,
+                                            user_id,
+                                            system_id,
+                                            username,
+                                            creator,
+                                            date_created,
+                                            retired
+                                        )
+                                    select
+                                            uuid,
+                                            person_id,
+                                            user_id,
+                                            system_id,
+                                            username,
+                                            creator,
+                                            date_created,
+                                            retired
+                                           from users;
+                                    SELECT "Completed processing users data ", CONCAT("Time: ", NOW());
+                                    END$$
 
 
 
@@ -1614,6 +1671,8 @@ CALL sp_populate_etl_CHW_overdose_reporting();
 CALL sp_populate_etl_patient_triage();
 CALL sp_populate_etl_diagnosis();
 CALL sp_populate_etl_depression_screening();
+CALL sp_populate_etl_person_relationship();
+CALL sp_populate_etl_users();
 
 UPDATE kp_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
