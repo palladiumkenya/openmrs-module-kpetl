@@ -94,7 +94,7 @@ public class EtlManagerFragmentController {
             public void execute(Connection connection) throws SQLException {
                 try {
                     Statement stmt = connection.createStatement();
-                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kenyaemr_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools');");
+                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kp_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools');");
                     ResultSetMetaData metaData = rs.getMetaData();
 
                     while (rs.next()) {
@@ -188,7 +188,7 @@ public class EtlManagerFragmentController {
             public void execute(Connection connection) throws SQLException {
                 try {
                     Statement stmt = connection.createStatement();
-                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kenyaemr_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools');");
+                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kp_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools');");
                     ResultSetMetaData metaData = rs.getMetaData();
 
 
